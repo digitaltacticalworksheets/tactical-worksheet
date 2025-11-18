@@ -335,8 +335,8 @@
     /* Floating Notes Window */
     #floatingNotes {
       position: absolute;
-      top: 650px; 
-      left: 30px;
+      top:550px; 
+      left:60px;
       width: 240px;
       background: #222;
       border: 1px solid #444;
@@ -617,7 +617,16 @@ function renderTabBar() {
     
     const nameSpan = document.createElement("span");
     nameSpan.textContent = tab.name;
+
+    // === SINGLE CLICK: switch tabs ===
     nameSpan.onclick = () => switchTab(tab.id);
+
+    // === DOUBLE CLICK: rename tab ===
+    nameSpan.ondblclick = (e) => {
+      e.stopPropagation();
+      renameTab(tab.id);
+    };
+
     btn.appendChild(nameSpan);
 
     if (tabs.length > 1) {
@@ -635,11 +644,27 @@ function renderTabBar() {
   });
 }
 
+
 function switchTab(newId) {
   if (newId === currentTabId) return;
   saveCurrentTabToMemory();
   currentTabId = newId;
   loadTabFromMemory(currentTabId);
+  renderTabBar();
+}
+function renameTab(tabId) {
+  const tab = tabs.find(t => t.id === tabId);
+  if (!tab) return;
+
+  const newName = prompt("Enter a new name for this tab:", tab.name || "");
+  if (newName === null) return; // user hit Cancel
+
+  const trimmed = newName.trim();
+  if (!trimmed) return; // don't allow empty names
+
+  tab.name = trimmed;
+
+  // Re-render the tab bar so the new name shows up
   renderTabBar();
 }
 
@@ -914,6 +939,7 @@ function refreshNotesList() {
   tiles.forEach(tile => {
     const note = tile.dataset.note;
     if (!note) return;
+
     const item = document.createElement("div");
     item.className = "note-item";
 
@@ -929,14 +955,19 @@ function refreshNotesList() {
     item.appendChild(noteSpan);
 
     item.onclick = () => {
+      // Go to Move mode, select tile, scroll to it
       setMode("move");
       select(tile);
       tile.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+
+      // 🟡 Open the note editor for this tile
+      openNotePrompt(tile);
     };
 
     notesList.appendChild(item);
   });
 }
+
 
 /* ===== Layout Save / Load ===== */
 
@@ -1148,8 +1179,8 @@ buildPresetButtons("ritPresets", [
 
 /* Command (Chief color) */
 buildPresetButtons("chiefPresets", [
-  "District 1","District 2","District 3","District 4",
-  "District 5","District 6","EMS1","AC1"
+  "D-1","D-2","D-3","D-4",
+  "D-5","D-6","EMS-1","AC-1"
 ], "Chief","chief","preset-chief");
 
 /* Tower Outside Teams */
@@ -1564,7 +1595,6 @@ saveState();
 </body>
 
 </html>
-
 
 
 
