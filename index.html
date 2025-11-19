@@ -537,7 +537,7 @@
 
       <div id="worksheet">
         <div id="mapWrapper">
-          <img id="worksheetImage" src="worksheet.png" alt="Worksheet" />
+          <img id="worksheetImage" src="plain worksheet.png" alt="Worksheet" />
           <canvas id="drawCanvas"></canvas>
         </div>
       </div>
@@ -612,7 +612,7 @@ function initTabs() {
   const mainBoard = {
     id: 1,
     name: "Main Board",
-    bgImage: "worksheet.png",
+    bgImage: "plain worksheet.png",
     tiles: [],
     history: [],
     historyIndex: -1,
@@ -630,11 +630,22 @@ function initTabs() {
     canvasDataURL: null
   };
 
-  tabs = [mainBoard, blankSheet];
+  // TAB 3 — Tactical Worksheet
+  const tacticalSheet = {
+    id: 3,
+    name: "Tactical Worksheet",
+    bgImage: "worksheet.png",   // <-- make sure this file exists in your repo
+    tiles: [],
+    history: [],
+    historyIndex: -1,
+    canvasDataURL: null
+  };
+
+  tabs = [mainBoard, blankSheet, tacticalSheet];
   currentTabId = 1; // start on Main Board
 
   renderTabBar();
-  loadTabFromMemory(1); // load Main Board's background/image
+  loadTabFromMemory(2); // load Blank Board's background/image
 }
 
 
@@ -782,11 +793,11 @@ btnAddTab.onclick = () => {
   const name = prompt("Enter Name for new Tab:", "Sheet " + (tabs.length + 1));
   if (!name) return;
 
-  // We default to worksheet.png, user can change it later with "Change Map"
+  // We default to plain worksheet.png, user can change it later with "Change Map"
   const newTab = {
     id: Date.now(), 
     name: name,
-    bgImage: "worksheet.png",
+    bgImage: "plain worksheet.png",
     tiles: [],
     history: [],
     historyIndex: -1,
