@@ -1,5 +1,5 @@
 {
-  "name": "ICS Command Board",
+  "name": "Digital Tactical Worksheet",
   "short_name": "ICS Board",
   "description": "Incident Command worksheet board with draggable units, notes, and drawing tools.",
   "start_url": "index.html",
@@ -19,3 +19,4 @@
     }
   ]
 }
+
