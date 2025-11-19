@@ -6,7 +6,9 @@ const ASSETS = [
   "worksheet.png",
   "ICS_Program_Instruction_Manual.txt",
   "icons/ics-192.png",
-  "icons/ics-512.png"
+  "icons/ics-512.png",
+  "blank worksheet.png",
+  "plain worksheet.png"
 ];
 
 // Install: cache core assets
@@ -40,3 +42,4 @@ self.addEventListener("fetch", event => {
     })
   );
 });
+
