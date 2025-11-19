@@ -5,8 +5,8 @@ const ASSETS = [
   "index.html",
   "worksheet.png",
   "ICS_Program_Instruction_Manual.txt",
-  "icons/ics-192.png",
-  "icons/ics-512.png",
+  "icons/DTW_192.png",
+  "icons/DTW_512.png",
   "blank worksheet.png",
   "plain worksheet.png"
 ];
@@ -42,4 +42,5 @@ self.addEventListener("fetch", event => {
     })
   );
 });
+
 
