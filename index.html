@@ -1,4 +1,1665 @@
-<div class="preset-group collapsible-group">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/x-icon" href="ICS_flame.ico">
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="icon" type="image/png" href="icons/DTW-192.png">
+
+  <meta charset="UTF-8" />
+  <title>Incident Command Worksheet Board</title>
+  <style>
+  * { box-sizing: border-box; user-select: none; }
+
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #222;
+    display: flex;
+    flex-direction: column;
+    /* Let the flex layout handle height; html/body already 100% */
+  }
+
+  /* Toolbar - Standard flow (Unpinned) */
+  #toolbar {
+    background: #333;
+    padding: 6px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    color: #fff;
+    border-bottom: 1px solid #444;
+  }
+
+  #toolbar button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Tile button colors */
+  #btnEngine { background: #b71c1c; color: #fff; }
+  #btnTower  { background: #1565c0; color: #fff; }
+  #btnRescue { background: #2e7d32; color: #fff; }
+  #btnChief  { background: #fbc02d; color: #000; }
+  #btnRIT    { background: #ff6f00; color: #000; }
+  #btnOther  { background: #757575; color: #fff; }
+
+  /* Utility buttons */
+  #btnDelete      { background: #444;    color: #fff; }
+  #btnUndo        { background: #555;    color: #fff; }
+  #btnRedo        { background: #555;    color: #fff; }
+  #btnAutoStack   { background: #6a1b9a; color: #fff; }
+  #btnSaveLayout  { background: #00695c; color: #fff; }
+  #btnLoadLayout  { background: #0277bd; color: #fff; }
+  #btnToggleSidebar { background: #fff; border: 1px solid #777; color: #333; }
+  #btnChangeBg    { background: #e65100; color: #fff; }
+
+  /* Modes */
+  #btnModeMove  { background: #1976d2; color: #fff; }
+  #btnModePen   { background: #8e24aa; color: #fff; }
+  #btnModeErase { background: #c62828; color: #fff; }
+  #btnModeCheck { background: #2e7d32; color: #fff; }
+  #btnModeNote  { background: #ffb300; color: #000; }
+
+  #toolbar button:hover {
+    filter: brightness(1.1);
+  }
+
+  /* MAIN LAYOUT */
+  #board {
+    position: relative;
+    flex: 1;              /* Fill vertical space under toolbar */
+    min-height: 0;        /* Allow children to shrink properly */
+    border-top: 1px solid #444;
+    background: #555;
+    display: flex;
+    flex-direction: row;
+    padding: 0;
+  }
+
+  /* Sidebar */
+ #sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 280px;
+  background: #2b2b2b;
+  border-right: 1px solid #444;
+  padding: 8px;
+  transition: margin-left 0.3s ease;
+  flex-shrink: 0;
+
+  /* NEW: scroll behavior */
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* NEW: ensure it doesn't take more space than screen */
+  max-height: calc(100vh - 60px); /* subtract toolbar height */
+}
+
+
+  #sidebar.hidden {
+    margin-left: -290px;
+    display: none;
+  }
+
+  .preset-group {
+    background: #333;
+    border-radius: 4px;
+    padding: 6px;
+  }
+
+  .preset-title {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: #fff;
+  }
+
+  .preset-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  /* Bigger preset unit buttons, keep original colors */
+  .preset-buttons button {
+    font-size: 14px !important;
+    padding: 6px 10px !important;
+    min-width: 40px !important;
+    height: 32px !important;
+    border-radius: 4px !important;
+    font-weight: 700;
+  }
+
+  .preset-engine { background: #b71c1c; color: #fff; }
+  .preset-tower  { background: #1565c0; color: #fff; }
+  .preset-rescue { background: #2e7d32; color: #fff; }
+  .preset-rit    { background: #ff6f00; color: #000; }
+  .preset-chief  { background: #fbc02d; color: #000; }
+
+  .collapsible-header {
+    cursor: pointer;
+    color: #fff;
+    font-weight: bold;
+    user-select: none;
+  }
+
+  .collapsible-content {
+    overflow: hidden;
+    max-height: 500px;
+    transition: max-height 0.25s ease-out;
+  }
+
+  .collapsed .collapsible-content {
+    max-height: 0;
+  }
+
+  .collapsible-header::after { content: " ▼"; }
+  .collapsed .collapsible-header::after { content: " ▲"; }
+
+  /* TAB BAR STYLES */
+  #workspaceContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    min-width: 0;  /* Flexbox overflow fix */
+    min-height: 0; /* Let it shrink within #board */
+  }
+
+  #tabBar {
+    background: #222;
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    border-bottom: 1px solid #444;
+    height: 34px;
+  }
+
+  .tab-item {
+    padding: 0 10px;
+    background: #333;
+    color: #aaa;
+    border-right: 1px solid #444;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tab-item:hover {
+    background: #444;
+    color: #fff;
+  }
+
+  .tab-item.active {
+    background: #0277bd;
+    color: #fff;
+    font-weight: bold;
+  }
+
+  .tab-close {
+    font-size: 14px;
+    width: 16px;
+    height: 16px;
+    line-height: 14px;
+    text-align: center;
+    border-radius: 50%;
+    color: #ccc;
+    cursor: pointer;
+  }
+
+  .tab-close:hover {
+    background: rgba(0,0,0,0.3);
+    color: #fff;
+  }
+
+  #btnAddTab {
+    padding: 0 12px;
+    background: #1b5e20;
+    color: #fff;
+    cursor: pointer;
+    font-weight: bold;
+    border: none;
+    font-size: 16px;
+  }
+
+  #btnAddTab:hover { background: #2e7d32; }
+
+  /* WORKSHEET AREA */
+  #worksheet {
+    position: relative;
+    flex: 1;             /* Take all remaining height in workspaceContainer */
+    background: #fff;
+
+    /* Center content horizontally */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Align top so large maps scroll down */
+
+    padding: 10px;       /* Slightly reduced padding to use more space */
+    overflow: auto;      /* Let worksheet scroll instead of body */
+  }
+
+  #mapWrapper {
+    position: relative;
+    display: inline-block;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  #worksheetImage {
+    display: block;
+    max-width: none;
+    pointer-events: none;
+  }
+
+  #drawCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 5;
+    touch-action: none;
+  }
+
+  .unit-tile {
+    position: absolute;
+    min-width: 60px;
+    padding: 3px 6px;
+    border: 1px solid #000;
+    background: #ddd;
+    font-size: 15px;
+    font-weight: bold;
+    border-radius: 3px;
+    cursor: grab;
+    z-index: 10;
+    white-space: nowrap;
+  }
+
+  .unit-tile.engine { background: #ff8a80; }
+  .unit-tile.tower  { background: #82b1ff; }
+  .unit-tile.rescue { background: #a5d6a7; }
+  .unit-tile.chief  { background: #fff59d; }
+  .unit-tile.rit    { background: #ffcc80; }
+  .unit-tile.other  { background: #e0e0e0; }
+
+  .unit-tile.selected {
+    outline: 2px solid #000;
+  }
+
+  .unit-tile[data-note]::after {
+    content: "📝";
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 14px;
+    background: #222;
+    color: #ffeb3b;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 2px rgba(0,0,0,0.7);
+    pointer-events: none;
+  }
+
+  .spacer { flex-grow: 1; }
+
+  .mode-indicator {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+
+  .note-item {
+    font-size: 11px;
+    color: #f5f5f5;
+    padding: 3px 4px;
+    margin-bottom: 2px;
+    border-radius: 3px;
+    background: #424242;
+    cursor: pointer;
+  }
+
+  .note-item:hover {
+    background: #616161;
+  }
+
+  .note-label {
+    font-weight: bold;
+    margin-right: 4px;
+  }
+
+  .note-text {
+    opacity: 0.9;
+  }
+
+  /* Floating Notes Window */
+  #floatingNotes {
+    position: absolute;
+    top: 50px;
+    left: 850px;
+    width: 240px;
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    z-index: 9999;
+    overflow: hidden;
+  }
+  #floatingNotes {
+  display: none; /* Hidden until first note */
+}
+
+
+  #floatingNotesHeader {
+    background: #111;
+    padding: 6px;
+    color: #fff;
+    font-weight: bold;
+    cursor: grab;
+    user-select: none;
+    text-align: center;
+  }
+
+  #floatingNotesContent {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 4px;
+  }
+
+  #floatingNotes.dragging #floatingNotesHeader {
+    cursor: grabbing;
+    background: #000;
+  }
+
+  /* ===== Tablet / iPad layout ===== */
+  @media (max-width: 1100px) {
+
+    /* Stack sidebar on top, map below */
+    #board {
+      flex-direction: column;
+    }
+
+    /* Sidebar becomes full-width and scrollable */
+    #sidebar {
+      width: 100%;
+      max-height: 35vh;
+      border-right: none;
+      border-bottom: 1px solid #444;
+      overflow-y: auto;
+    }
+
+    /* Worksheet area fills the rest of the screen */
+    #workspaceContainer {
+      flex: 1;
+    }
+
+    #worksheet {
+      padding: 10px;
+    }
+  }
+
+  @media print {
+    body { background: #fff; display: block; }
+    #toolbar { display: none !important; }
+    #board { display: block; }
+    #workspaceContainer { display: block; }
+    #tabBar { display: none; }
+    #worksheet { display: block; padding: 0; overflow: visible; }
+    #floatingNotes { display: none !important; }
+    #sidebar { display: none !important; }
+    #mapWrapper { box-shadow: none; }
+  }
+
+  #btnHelp {
+    background: #4a148c;
+    color: #fff;
+  }
+</style>
+
+</head>
+<body>
+
+  <div id="toolbar">
+    
+    
+    <button id="btnToggleSidebar">Toggle Preset Units</button>
+
+    <div class="spacer"></div>
+
+    <button id="btnEngine">Engine</button>
+    <button id="btnTower">Tower</button>
+    <button id="btnRescue">Rescue</button>
+    <button id="btnChief">Chief</button>
+    <button id="btnRIT">RIT</button>
+    <button id="btnOther">Other</button>
+
+    <div class="spacer"></div>
+
+    <button id="btnAutoStack" title="Auto Organize">Stack</button>
+    <button id="btnModeMove" title="Move Tiles">Move</button>
+    <button id="btnModePen" title="Draw Lines">Draw</button>
+    <button id="btnModeErase" title="Erase Drawing">Erase</button>
+    <button id="btnModeCheck" title="Place Checkmarks">Check</button>
+    <button id="btnModeNote" title="Add Note to Tile">Note</button>
+
+    <div class="spacer"></div>
+
+   
+    <button id="btnDelete" title="Delete Selected">Del</button>
+    <button id="btnUndo">Undo</button>
+    <button id="btnRedo">Redo</button>
+    <button id="btnSaveLayout">Save</button>
+    <button id="btnLoadLayout">Load</button>
+    <button id="btnChangeBg" title="Upload Image/Map">Upload Worksheet</button>
+    <button id="btnFullscreen">Fullscreen</button>
+    <button id="btnHelp">Help</button>
+
+    <span id="modeLabel" class="mode-indicator">Mode: Move/Select</span>
+  </div>
+
+  <div id="board">
+      
+    <div id="sidebar">
+
+      <div class="preset-group" style="padding:4px 6px; display:flex; gap:4px; justify-content:space-between;">
+        <button id="btnCollapseAll" style="flex:1; font-size:11px;">Collapse All</button>
+        <button id="btnExpandAll" style="flex:1; font-size:11px;">Expand All</button>
+      </div>
+
+      <div class="preset-group collapsible-group">
+        <div class="preset-title collapsible-header">Engines</div>
+        <div class="preset-buttons collapsible-content" id="enginePresets"></div>
+      </div>
+
+      <div class="preset-group collapsible-group">
+        <div class="preset-title collapsible-header">Towers</div>
+        <div class="preset-buttons collapsible-content" id="towerPresets"></div>
+      </div>
+
+       <div class="preset-group collapsible-group">
+        <div class="preset-title collapsible-header">Tower Outside Teams</div>
+        <div class="preset-buttons collapsible-content" id="towerOutsidePresets"></div>
+      </div>
+
+      <div class="preset-group collapsible-group">
+        <div class="preset-title collapsible-header">Rescues</div>
+        <div class="preset-buttons collapsible-content" id="rescuePresets"></div>
+      </div>
+
+     <div class="preset-group collapsible-group">
+      <div class="preset-title collapsible-header">RIT</div>
+      <div class="preset-buttons collapsible-content" id="ritPresets"></div>
+    </div>
+    <div class="preset-group collapsible-group">
         <div class="preset-title collapsible-header">Command</div>
         <div class="preset-buttons collapsible-content" id="chiefPresets"></div>
       </div>
+
+
+      <div class="preset-group collapsible-group">
+        <div class="preset-title collapsible-header">Medic Units</div>
+        <div class="preset-buttons collapsible-content" id="medicUnitPresets"></div>
+      </div>
+
+      
+    </div>
+
+    <div id="workspaceContainer">
+      <div id="tabBar">
+        <button id="btnAddTab">+</button>
+      </div>
+
+      <div id="worksheet">
+        <div id="mapWrapper">
+          <img id="worksheetImage" src="worksheet.png" alt="Worksheet" />
+          <canvas id="drawCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="floatingNotes">
+    <div id="floatingNotesHeader">Notes</div>
+    <div id="floatingNotesContent"></div>
+  </div>
+
+  <input type="file" id="loadFileInput" accept="application/json" style="display:none" />
+  <input type="file" id="bgUploadInput" accept="image/png, image/jpeg, image/jpg, image/gif, image/webp" style="display:none" />
+
+<script>
+/* ===== DOM references ===== */
+const worksheet      = document.getElementById("worksheet");
+const mapWrapper     = document.getElementById("mapWrapper"); 
+const worksheetImage = document.getElementById("worksheetImage");
+const drawCanvas     = document.getElementById("drawCanvas");
+const ctx            = drawCanvas.getContext("2d");
+const modeLabel      = document.getElementById("modeLabel");
+
+const floatingNotes        = document.getElementById("floatingNotes");
+const floatingNotesHeader  = document.getElementById("floatingNotesHeader");
+const floatingNotesContent = document.getElementById("floatingNotesContent");
+const notesList            = floatingNotesContent;
+
+const loadFileInput       = document.getElementById("loadFileInput");
+const bgUploadInput       = document.getElementById("bgUploadInput"); 
+const btnSaveLayout       = document.getElementById("btnSaveLayout");
+const btnLoadLayout       = document.getElementById("btnLoadLayout");
+const btnChangeBg         = document.getElementById("btnChangeBg"); 
+const btnCollapseAll      = document.getElementById("btnCollapseAll");
+const btnExpandAll        = document.getElementById("btnExpandAll");
+const btnToggleSidebar    = document.getElementById("btnToggleSidebar");
+const sidebar             = document.getElementById("sidebar");
+
+/* Tab Elements */
+const tabBar    = document.getElementById("tabBar");
+const btnAddTab = document.getElementById("btnAddTab");
+
+const GRID = 10;
+
+let mode = "move";
+let selected = null;
+
+let draggingTile = null;
+let dragOffsetX = 0, dragOffsetY = 0;
+
+let isDrawing = false;
+let lastX = 0, lastY = 0;
+
+/* Touch double-tap + long-press */
+let lastTapTime = 0;
+let lastTapTile = null;
+const DOUBLE_TAP_MS = 300;
+const LONG_PRESS_MS = 700;
+let longPressTimeout = null;
+let touchMoved = false;
+let mouseMovedDuringPress = false;
+
+
+/* ===== TAB MANAGEMENT SYSTEM ===== */
+let tabs = [];
+let currentTabId = null;
+
+function initTabs() {
+
+  // TAB 1 — Main Board
+  const mainBoard = {
+    id: 1,
+    name: "Main Board",
+    bgImage: "worksheet.png",
+    tiles: [],
+    history: [],
+    historyIndex: -1,
+    canvasDataURL: null
+  };
+
+  // TAB 2 — Blank Sheet
+  const blankSheet = {
+    id: 2,
+    name: "Blank Sheet",
+    bgImage: "blank worksheet.png",   // <-- make sure this file exists in your repo
+    tiles: [],
+    history: [],
+    historyIndex: -1,
+    canvasDataURL: null
+  };
+
+  tabs = [mainBoard, blankSheet];
+  currentTabId = 1; // start on Main Board
+
+  renderTabBar();
+  loadTabFromMemory(1); // load Main Board's background/image
+}
+
+
+function renderTabBar() {
+  const existingTabs = tabBar.querySelectorAll(".tab-item");
+  existingTabs.forEach(t => t.remove());
+
+  tabs.forEach(tab => {
+    const btn = document.createElement("div");
+    btn.className = "tab-item";
+    if (tab.id === currentTabId) btn.classList.add("active");
+    
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = tab.name;
+
+    // === SINGLE CLICK: switch tabs ===
+    nameSpan.onclick = () => switchTab(tab.id);
+
+    // === DOUBLE CLICK: rename tab ===
+    nameSpan.ondblclick = (e) => {
+      e.stopPropagation();
+      renameTab(tab.id);
+    };
+
+    btn.appendChild(nameSpan);
+
+    if (tabs.length > 1) {
+      const closeBtn = document.createElement("span");
+      closeBtn.className = "tab-close";
+      closeBtn.textContent = "×";
+      closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        deleteTab(tab.id);
+      };
+      btn.appendChild(closeBtn);
+    }
+
+    tabBar.insertBefore(btn, btnAddTab);
+  });
+}
+
+
+function switchTab(newId) {
+  if (newId === currentTabId) return;
+  saveCurrentTabToMemory();
+  currentTabId = newId;
+  loadTabFromMemory(currentTabId);
+  renderTabBar();
+}
+function renameTab(tabId) {
+  const tab = tabs.find(t => t.id === tabId);
+  if (!tab) return;
+
+  const newName = prompt("Enter a new name for this tab:", tab.name || "");
+  if (newName === null) return; // user hit Cancel
+
+  const trimmed = newName.trim();
+  if (!trimmed) return; // don't allow empty names
+
+  tab.name = trimmed;
+
+  // Re-render the tab bar so the new name shows up
+  renderTabBar();
+}
+
+function deleteTab(id) {
+  if (tabs.length <= 1) return;
+  
+  const confirmDelete = confirm("Are you sure you want to delete this tab?");
+  if(!confirmDelete) return;
+
+  const index = tabs.findIndex(t => t.id === id);
+  if (index === -1) return;
+
+  tabs.splice(index, 1);
+
+  if (id === currentTabId) {
+    const newIndex = Math.max(0, index - 1);
+    currentTabId = tabs[newIndex].id;
+    loadTabFromMemory(currentTabId);
+  }
+
+  renderTabBar();
+}
+
+function saveCurrentTabToMemory() {
+  const tab = tabs.find(t => t.id === currentTabId);
+  if (!tab) return;
+
+  const domTiles = [...mapWrapper.querySelectorAll(".unit-tile")]; 
+  tab.tiles = domTiles.map(t => ({
+    type: t.dataset.type,
+    cssClass: [...t.classList].find(c => c !== "unit-tile" && c !== "selected"),
+    left: t.style.left,
+    top: t.style.top,
+    label: t.textContent,
+    note: t.dataset.note || ""
+  }));
+
+  tab.canvasDataURL = drawCanvas.toDataURL();
+  // We don't save bgImage here because it's set when loaded or changed explicitly
+  tab.history = [...history];
+  tab.historyIndex = historyIndex;
+}
+
+function loadTabFromMemory(id) {
+  const tab = tabs.find(t => t.id === id);
+  if (!tab) return;
+
+  // Clear Tiles
+  [...mapWrapper.querySelectorAll(".unit-tile")].forEach(t => t.remove());
+  ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  
+  // Set Background
+  worksheetImage.src = tab.bgImage;
+
+  // Restore Tiles
+  tab.tiles.forEach(d => {
+    const tile = createTileElement(d.type, d.cssClass, d.label);
+    tile.style.left = d.left;
+    tile.style.top  = d.top;
+    if (d.note) {
+      tile.dataset.note = d.note;
+      tile.title = d.note;
+    }
+    mapWrapper.appendChild(tile);
+  });
+
+  // Restore Canvas
+  if (tab.canvasDataURL) {
+    const img = new Image();
+    img.onload = function() {
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = tab.canvasDataURL;
+  }
+
+  history = [...tab.history];
+  historyIndex = tab.historyIndex;
+  
+  refreshNotesList();
+}
+
+btnAddTab.onclick = () => {
+  const name = prompt("Enter Name for new Tab:", "Sheet " + (tabs.length + 1));
+  if (!name) return;
+
+  // We default to worksheet.png, user can change it later with "Change Map"
+  const newTab = {
+    id: Date.now(), 
+    name: name,
+    bgImage: "worksheet.png",
+    tiles: [],
+    history: [],
+    historyIndex: -1,
+    canvasDataURL: null
+  };
+  
+  saveCurrentTabToMemory();
+  tabs.push(newTab);
+  currentTabId = newTab.id;
+  loadTabFromMemory(newTab.id);
+  renderTabBar();
+};
+
+/* ===== Map Background Upload Logic ===== */
+btnChangeBg.onclick = () => {
+  bgUploadInput.click();
+};
+
+bgUploadInput.onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    // Update current tab data
+    const tab = tabs.find(t => t.id === currentTabId);
+    if (tab) {
+      const dataUrl = evt.target.result;
+      tab.bgImage = dataUrl; // Save Base64 image data
+      worksheetImage.src = dataUrl; // Update DOM
+    }
+  };
+  reader.readAsDataURL(file);
+  e.target.value = ""; // Reset
+};
+
+/* ===== Undo/Redo (tiles) ===== */
+let history = [];
+let historyIndex = -1;
+let applyingState = false;
+
+function saveState() {
+  if (applyingState) return;
+  
+  const tiles = [...mapWrapper.querySelectorAll(".unit-tile")];
+  const state = tiles.map(t => ({
+    type: t.dataset.type,
+    cssClass: [...t.classList].find(c => c !== "unit-tile" && c !== "selected"),
+    left: t.style.left,
+    top: t.style.top,
+    label: t.textContent,
+    note: t.dataset.note || ""
+  }));
+  history = history.slice(0, historyIndex + 1);
+  history.push(state);
+  historyIndex++;
+  refreshNotesList();
+}
+
+function applyState(state) {
+  applyingState = true;
+  [...mapWrapper.querySelectorAll(".unit-tile")].forEach(t => t.remove());
+  state.forEach(d => {
+    const tile = createTileElement(d.type, d.cssClass, d.label);
+    tile.style.left = d.left;
+    tile.style.top  = d.top;
+    if (d.note) {
+      tile.dataset.note = d.note;
+      tile.title = d.note;
+    }
+    mapWrapper.appendChild(tile);
+  });
+  applyingState = false;
+  refreshNotesList();
+}
+
+document.getElementById("btnUndo").onclick = () => {
+  if (historyIndex > 0) {
+    historyIndex--;
+    applyState(history[historyIndex]);
+  }
+};
+document.getElementById("btnRedo").onclick = () => {
+  if (historyIndex < history.length - 1) {
+    historyIndex++;
+    applyState(history[historyIndex]);
+  }
+};
+
+/* ===== Toggle Sidebar ===== */
+btnToggleSidebar.onclick = () => {
+  sidebar.classList.toggle("hidden");
+  setTimeout(resizeCanvas, 350);
+};
+
+/* ===== Canvas sizing ===== */
+function resizeCanvas() {
+  // Resize based on image size, not screen size
+  const imgW = worksheetImage.width;
+  const imgH = worksheetImage.height;
+
+  if (imgW === 0 || imgH === 0) return; 
+  
+  if (drawCanvas.width !== imgW || drawCanvas.height !== imgH) {
+    const saved = drawCanvas.toDataURL();
+    drawCanvas.width  = imgW;
+    drawCanvas.height = imgH;
+    
+    // ensure mapWrapper fits image
+    mapWrapper.style.width = imgW + "px";
+    mapWrapper.style.height = imgH + "px";
+
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img, 0, 0);
+    img.src = saved;
+  }
+}
+window.addEventListener("load", resizeCanvas);
+window.addEventListener("resize", resizeCanvas);
+worksheetImage.addEventListener("load", resizeCanvas);
+
+/* ===== Modes ===== */
+function setMode(m) {
+  mode = m;
+  if (m === "pen" || m === "erase" || m === "check") {
+    drawCanvas.style.pointerEvents = "auto";
+  } else {
+    drawCanvas.style.pointerEvents = "none";
+  }
+
+  modeLabel.textContent =
+    "Mode: " + (m === "pen"   ? "Draw"
+             :  m === "erase" ? "Eraser"
+             :  m === "check" ? "Checkmark"
+             :  m === "note"  ? "Note"
+             :  "Move/Select");
+}
+document.getElementById("btnModeMove").onclick  = () => setMode("move");
+document.getElementById("btnModePen").onclick   = () => setMode("pen");
+document.getElementById("btnModeErase").onclick = () => setMode("erase");
+document.getElementById("btnModeCheck").onclick = () => setMode("check");
+document.getElementById("btnModeNote").onclick  = () => setMode("note");
+
+/* ===== Collapsible preset groups ===== */
+document.querySelectorAll(".collapsible-header").forEach(header => {
+  header.addEventListener("click", () => {
+    const group = header.parentElement;
+    group.classList.toggle("collapsed");
+  });
+});
+
+if (btnCollapseAll && btnExpandAll) {
+  btnCollapseAll.onclick = () => {
+    document.querySelectorAll(".collapsible-group").forEach(group => {
+      group.classList.add("collapsed");
+    });
+  };
+
+  btnExpandAll.onclick = () => {
+    document.querySelectorAll(".collapsible-group").forEach(group => {
+      group.classList.remove("collapsed");
+    });
+  };
+}
+
+/* ===== Selection ===== */
+function clearSelection() {
+  if (!selected) return;
+  selected.classList.remove("selected");
+  selected = null;
+}
+function select(el) {
+  clearSelection();
+  selected = el;
+  selected.classList.add("selected");
+}
+
+/* ===== Notes list ===== */
+function refreshNotesList() {
+  notesList.innerHTML = "";
+  const tiles = [...mapWrapper.querySelectorAll(".unit-tile")];
+  let noteCount = 0;
+
+  tiles.forEach(tile => {
+    const note = tile.dataset.note;
+    if (!note) return;
+
+    noteCount++;
+
+    const item = document.createElement("div");
+    item.className = "note-item";
+
+    const labelSpan = document.createElement("span");
+    labelSpan.className = "note-label";
+    labelSpan.textContent = tile.textContent + ":";
+
+    const noteSpan = document.createElement("span");
+    noteSpan.className = "note-text";
+    noteSpan.textContent = " " + note;
+
+    item.appendChild(labelSpan);
+    item.appendChild(noteSpan);
+
+    // Single click: jump to tile & select
+    item.onclick = () => {
+      setMode("move");
+      select(tile);
+      tile.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center"
+      });
+    };
+
+    // Double click: edit the note
+    item.ondblclick = (e) => {
+      e.stopPropagation();
+      setMode("move");
+      select(tile);
+      tile.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center"
+      });
+      openNotePrompt(tile);   // <- opens your note editor
+    };
+
+    notesList.appendChild(item);
+  });
+
+  // Show/hide the floating notes box depending on whether we have notes
+  const notesBox = document.getElementById("floatingNotes");
+  if (notesBox) {
+    notesBox.style.display = noteCount > 0 ? "block" : "none";
+  }
+}
+
+
+/* ===== Layout Save / Load ===== */
+
+function getCurrentLayout() {
+  saveCurrentTabToMemory(); 
+  return {
+    tabs: tabs,
+    currentTabId: currentTabId
+  };
+}
+
+btnSaveLayout.onclick = () => {
+  const layout = getCurrentLayout();
+  const json   = JSON.stringify(layout, null, 2);
+  const blob   = new Blob([json], { type: "application/json" });
+
+  const now  = new Date();
+  const pad  = n => String(n).padStart(2, "0");
+  const defName = `ic_layout_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+  let userName = prompt("Enter a file name for this layout:", defName);
+  if (userName === null) return;
+  userName = userName.trim();
+  if (!userName) userName = defName;
+
+  userName = userName.replace(/[\\\/:*?"<>|]/g, "_");
+
+  if (!userName.toLowerCase().endsWith(".json")) {
+    userName += ".json";
+  }
+
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = userName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+
+btnLoadLayout.onclick = () => {
+  loadFileInput.click();
+};
+
+loadFileInput.onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      
+      if (Array.isArray(data.tiles)) {
+        // Legacy
+        history = [];
+        historyIndex = -1;
+        applyState(data.tiles);
+        saveState();
+        alert("Loaded legacy layout into current tab.");
+      } else if (data.tabs) {
+        // New format
+        tabs = data.tabs;
+        currentTabId = data.currentTabId || tabs[0].id;
+        loadTabFromMemory(currentTabId);
+        renderTabBar();
+      } else {
+        alert("Invalid layout file.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Could not read layout file.");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+};
+
+/* ===== Notes on tiles ===== */
+function openNotePrompt(tile) {
+  const current = tile.dataset.note || "";
+  const label   = tile.textContent;
+  const note = prompt(`Enter note for ${label}:\n(Leave blank to clear)`, current);
+  
+  if (note !== null) {
+    const trimmed = note.trim();
+    if (trimmed) {
+      tile.dataset.note = trimmed;
+      tile.title = trimmed;
+    } else {
+      delete tile.dataset.note;
+      tile.title = "";
+    }
+    saveState();
+  }
+  setMode("move");
+}
+
+/* ===== Tile creation ===== */
+function createTileElement(type, cssClass, text) {
+  const tile = document.createElement("div");
+  tile.className = "unit-tile " + cssClass;
+  tile.dataset.type = type;
+  tile.textContent = text;
+  tile.style.left = "10px";
+  tile.style.top  = "10px";
+
+  tile.addEventListener("mousedown", startTileDragMouse);
+  tile.addEventListener("touchstart", startTileDragTouch, { passive: false });
+  tile.ondblclick = duplicateTileMouse;
+
+  return tile;
+}
+function createTile(type, cssClass) {
+  const label = prompt(`Enter ${type} label:`);
+  if (!label) return;
+  const tile = createTileElement(type, cssClass, label.trim());
+  mapWrapper.appendChild(tile); // Append to wrapper
+  select(tile);
+  saveState();
+}
+
+/* Generic tile buttons */
+document.getElementById("btnEngine").onclick = () => createTile("Engine","engine");
+document.getElementById("btnTower").onclick  = () => createTile("Tower","tower");
+document.getElementById("btnRescue").onclick = () => createTile("Rescue","rescue");
+document.getElementById("btnChief").onclick  = () => createTile("Chief","chief");
+document.getElementById("btnRIT").onclick    = () => createTile("RIT","rit");
+document.getElementById("btnOther").onclick  = () => createTile("Other","other");
+
+/*Help Button*/
+document.getElementById("btnHelp").onclick = () => {
+  window.open("Digital Tactical Worksheets Manual.txt", "_blank");
+};
+  const btnFullscreen = document.getElementById("btnFullscreen");
+
+if (btnFullscreen) {
+  btnFullscreen.addEventListener("click", () => {
+    if (!document.fullscreenElement) {
+      // ENTER fullscreen
+      document.documentElement.requestFullscreen().catch(err => {
+        console.log("Fullscreen failed:", err);
+      });
+      btnFullscreen.textContent = "Exit Fullscreen";
+    } else {
+      // EXIT fullscreen
+      document.exitFullscreen();
+      btnFullscreen.textContent = "Fullscreen";
+    }
+  });
+}
+
+// Update button text if user exits fullscreen by ESC
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement) {
+    btnFullscreen.textContent = "Fullscreen";
+  } else {
+    btnFullscreen.textContent = "Exit Fullscreen";
+  }
+});
+
+
+
+/* ===== Presets ===== */
+function spawnPreset(type, cssClass, label) {
+  const tile = createTileElement(type, cssClass, label);
+  mapWrapper.appendChild(tile);
+  select(tile);
+  saveState();
+}
+function buildPresetButtons(targetId, labels, type, cssClass, btnClass) {
+  const container = document.getElementById(targetId);
+  labels.forEach(lbl => {
+    const b = document.createElement("button");
+    b.className = "preset-button " + btnClass;
+    b.textContent = lbl;
+    b.onclick = () => spawnPreset(type, cssClass, lbl);
+    container.appendChild(b);
+  });
+}
+
+/* Engines -> E-1,... */
+buildPresetButtons("enginePresets", [
+  "E-1","E-2","E-3","E-4","E-5",
+  "E-6","E-7","E-8","E-9","E-10",
+  "E-11","E-12","E-13","E-14","E-15",
+  "E-16","E-17","E-18","E-19","E-101"
+], "Engine","engine","preset-engine");
+
+/* Towers -> T-1,... */
+buildPresetButtons("towerPresets", [
+  "T-1","T-2","T-6","T-8",
+  "T-9","T-10","T-11","T-15"
+], "Tower","tower","preset-tower");
+
+/* Rescues -> R-1,... */
+buildPresetButtons("rescuePresets", [
+  "R-1","R-2","R-3","R-6","R-7",
+  "R-8","R-9","R-10","R-11",
+  "R-12","R-15"
+], "Rescue","rescue","preset-rescue");
+
+
+/* Special (RIT color) */
+buildPresetButtons("ritPresets", [
+  "HR-1","HAZ-1", "HR1 Outside","HAZ1 Outside"
+], "RIT","rit","preset-rit");
+
+/* Command (Chief color) */
+buildPresetButtons("chiefPresets", [
+  "D-1","D-2","D-3","D-4",
+  "D-5","D-6","EMS-1","AC-1"
+], "Chief","chief","preset-chief");
+
+/* Tower Outside Teams */
+buildPresetButtons("towerOutsidePresets", [
+  "T-1 Outside","T-2 Outside","T-6 Outside","T-8 Outside",
+  "T-9 Outside","T-10 Outside","T-11 Outside","T-15 Outside"
+], "Tower","tower","preset-tower");
+
+/* Medic Unit Team */
+buildPresetButtons("medicUnitPresets", [
+  "M102","M141", "M161", "M171","M201","M601", "M801"
+], "Rescue","rescue","preset-rescue");
+
+/* ===== Tile drag: mouse ===== */
+function startTileDragMouse(e) {
+  const tile = e.currentTarget;
+
+  if (mode === "note") {
+    openNotePrompt(tile);
+    e.preventDefault();
+    return;
+  }
+
+  if (mode !== "move") setMode("move");
+  if (mode !== "move") return;
+
+  select(tile);
+
+  const r = tile.getBoundingClientRect();
+  const ws = worksheet.getBoundingClientRect();
+
+  dragOffsetX = e.clientX - r.left;
+  dragOffsetY = e.clientY - r.top;
+
+  draggingTile = tile;
+  mouseMovedDuringPress = false;
+
+  // 🔹 Start long-press timer for mouse to open notes
+  clearTimeout(longPressTimeout);
+  longPressTimeout = setTimeout(() => {
+    if (!mouseMovedDuringPress && draggingTile === tile) {
+      openNotePrompt(tile);
+      // stop treating this as a drag
+      draggingTile = null;
+    }
+  }, LONG_PRESS_MS);
+
+  document.addEventListener("mousemove", tileDragMouse);
+  document.addEventListener("mouseup", stopTileDragMouse);
+  e.preventDefault();
+}
+
+function tileDragMouse(e) {
+  if (!draggingTile) return;
+
+   mouseMovedDuringPress = true;  // <-- cancel long-press-to-note if it becomes a drag
+
+  const ws = mapWrapper.getBoundingClientRect();
+  let x = e.clientX - ws.left - dragOffsetX;
+  let y = e.clientY - ws.top  - dragOffsetY;
+
+  x = Math.round(x / GRID) * GRID;
+  y = Math.round(y / GRID) * GRID;
+
+  draggingTile.style.left = x + "px";
+  draggingTile.style.top  = y + "px";
+}
+function stopTileDragMouse() {
+  clearTimeout(longPressTimeout);   // 🔹 cancel any pending long-press
+
+  if (draggingTile) saveState();
+  draggingTile = null;
+  document.removeEventListener("mousemove", tileDragMouse);
+  document.removeEventListener("mouseup", stopTileDragMouse);
+}
+
+
+/* ===== Tile drag: touch ===== */
+function startTileDragTouch(e) {
+  const tile = e.currentTarget;
+
+  if (mode === "note") {
+    openNotePrompt(tile);
+    e.preventDefault();
+    return;
+  }
+
+  if (mode !== "move") setMode("move");
+  if (mode !== "move") return;
+
+  select(tile);
+  touchMoved = false;
+
+  const touch = e.touches[0];
+  const r = tile.getBoundingClientRect();
+  const ws = mapWrapper.getBoundingClientRect();
+
+  dragOffsetX = touch.clientX - r.left;
+  dragOffsetY = touch.clientY - r.top;
+
+  draggingTile = tile;
+
+  clearTimeout(longPressTimeout);
+  
+  longPressTimeout = setTimeout(() => {
+    if (!touchMoved && draggingTile === tile) {
+      openNotePrompt(tile);
+      draggingTile = null; 
+    }
+  }, LONG_PRESS_MS);
+
+  document.addEventListener("touchmove", tileDragTouch, { passive: false });
+  document.addEventListener("touchend", stopTileDragTouch);
+  e.preventDefault();
+}
+function tileDragTouch(e) {
+  if (!draggingTile) return;
+  touchMoved = true;
+
+  const touch = e.touches[0];
+  const ws = mapWrapper.getBoundingClientRect();
+
+  let x = touch.clientX - ws.left - dragOffsetX;
+  let y = touch.clientY - ws.top  - dragOffsetY;
+
+  x = Math.round(x / GRID) * GRID;
+  y = Math.round(y / GRID) * GRID;
+
+  draggingTile.style.left = x + "px";
+  draggingTile.style.top  = y + "px";
+
+  e.preventDefault();
+}
+function stopTileDragTouch(e) {
+  clearTimeout(longPressTimeout);
+
+  if (!touchMoved && draggingTile) {
+    const now = Date.now();
+    if (lastTapTile === draggingTile && (now - lastTapTime) < DOUBLE_TAP_MS) {
+      duplicateTileGeneric(draggingTile);
+      lastTapTile = null;
+    } else {
+      lastTapTile = draggingTile;
+      lastTapTime = now;
+    }
+  }
+
+  if (draggingTile) saveState();
+  draggingTile = null;
+
+  document.removeEventListener("touchmove", tileDragTouch);
+  document.removeEventListener("touchend", stopTileDragTouch);
+}
+
+/* ===== Duplicate tile ===== */
+function duplicateTileGeneric(orig) {
+  const r = orig.getBoundingClientRect();
+  const ws = mapWrapper.getBoundingClientRect();
+  const left = r.left - ws.left;
+  const top  = r.top  - ws.top;
+
+  const cssClass = [...orig.classList].find(c => c !== "unit-tile" && c !== "selected");
+  const dup = createTileElement(orig.dataset.type, cssClass, orig.textContent);
+  dup.style.left = (left + 20) + "px";
+  dup.style.top  = (top  + 20) + "px";
+
+  mapWrapper.appendChild(dup);
+  select(dup);
+  saveState();
+}
+function duplicateTileMouse(e) {
+  if (mode !== "move") return;
+  duplicateTileGeneric(e.currentTarget);
+}
+
+/* ===== Checkmark drawing ===== */
+function drawCheckmark(x, y) {
+  ctx.save();
+  ctx.globalCompositeOperation = "source-over";
+  ctx.strokeStyle = "lime";
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(x - 6, y);
+  ctx.lineTo(x - 2, y + 6);
+  ctx.lineTo(x + 8, y - 6);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* ===== Drawing: mouse ===== */
+drawCanvas.addEventListener("mousedown", e => {
+  const r = drawCanvas.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+
+  if (mode === "check") {
+    drawCheckmark(x, y);
+    return;
+  }
+
+  if (mode !== "pen" && mode !== "erase") return;
+  isDrawing = true;
+  lastX = x;
+  lastY = y;
+});
+drawCanvas.addEventListener("mousemove", e => {
+  if (!isDrawing) return;
+  if (mode !== "pen" && mode !== "erase") return;
+
+  const r = drawCanvas.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+
+  if (mode === "pen") {
+    ctx.globalCompositeOperation = "source-over";
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "red";
+  } else if (mode === "erase") {
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.lineWidth = 15;
+    ctx.strokeStyle = "rgba(0,0,0,1)";
+  }
+
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+
+  lastX = x;
+  lastY = y;
+});
+drawCanvas.addEventListener("mouseup", () => {
+  isDrawing = false;
+  ctx.globalCompositeOperation = "source-over";
+});
+drawCanvas.addEventListener("mouseleave", () => {
+  isDrawing = false;
+  ctx.globalCompositeOperation = "source-over";
+});
+
+/* ===== Drawing: touch ===== */
+drawCanvas.addEventListener("touchstart", e => {
+  const t = e.touches[0];
+  const r = drawCanvas.getBoundingClientRect();
+  const x = t.clientX - r.left;
+  const y = t.clientY - r.top;
+
+  if (mode === "check") {
+    e.preventDefault();
+    drawCheckmark(x, y);
+    return;
+  }
+
+  if (mode !== "pen" && mode !== "erase") return;
+  e.preventDefault();
+  isDrawing = true;
+  lastX = x;
+  lastY = y;
+}, { passive: false });
+drawCanvas.addEventListener("touchmove", e => {
+  if (!isDrawing) return;
+  if (mode !== "pen" && mode !== "erase") return;
+  e.preventDefault();
+
+  const t = e.touches[0];
+  const r = drawCanvas.getBoundingClientRect();
+  const x = t.clientX - r.left;
+  const y = t.clientY - r.top;
+
+  if (mode === "pen") {
+    ctx.globalCompositeOperation = "source-over";
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "red";
+  } else if (mode === "erase") {
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.lineWidth = 15;
+    ctx.strokeStyle = "rgba(0,0,0,1)";
+  }
+
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+
+  lastX = x;
+  lastY = y;
+}, { passive: false });
+drawCanvas.addEventListener("touchend", () => {
+  isDrawing = false;
+  ctx.globalCompositeOperation = "source-over";
+});
+drawCanvas.addEventListener("touchcancel", () => {
+  isDrawing = false;
+  ctx.globalCompositeOperation = "source-over";
+});
+
+/* ===== Delete selected ===== */
+document.getElementById("btnDelete").onclick = () => {
+  if (!selected) return;
+  selected.remove();
+  selected = null;
+  saveState();
+};
+
+/* ===== Auto Stack ===== */
+document.getElementById("btnAutoStack").onclick = () => {
+  const colX = {
+    engine: 20,
+    tower:  200,
+    rescue: 380,
+    rit:    560,
+    chief:  740,
+    other:  920
+  };
+  const verticalSpacing = 28;
+  const topMargin = 20;
+
+  const stacks = {
+    engine: [],
+    tower: [],
+    rescue: [],
+    rit: [],
+    chief: [],
+    other: []
+  };
+
+  const tiles = [...mapWrapper.querySelectorAll(".unit-tile")];
+  tiles.forEach(t => {
+    const type = t.dataset.type.toLowerCase();
+    if      (type === "engine") stacks.engine.push(t);
+    else if (type === "tower")  stacks.tower.push(t);
+    else if (type === "rescue") stacks.rescue.push(t);
+    else if (type === "rit")    stacks.rit.push(t);
+    else if (type === "chief")  stacks.chief.push(t);
+    else                        stacks.other.push(t);
+  });
+
+  Object.entries(stacks).forEach(([key, list]) => {
+    let x = colX[key];
+    if (x === undefined) return;
+    list.forEach((tile, idx) => {
+      tile.style.left = x + "px";
+      tile.style.top  = (topMargin + idx * verticalSpacing) + "px";
+    });
+  });
+
+  saveState();
+};
+
+/* ===== Floating Notes drag ===== */
+let notesDrag = false;
+let notesOffsetX = 0, notesOffsetY = 0;
+
+floatingNotesHeader.addEventListener("mousedown", e => {
+  notesDrag = true;
+  notesOffsetX = e.clientX - floatingNotes.offsetLeft;
+  notesOffsetY = e.clientY - floatingNotes.offsetTop;
+  floatingNotes.classList.add("dragging");
+  e.preventDefault();
+});
+document.addEventListener("mousemove", e => {
+  if (!notesDrag) return;
+  floatingNotes.style.left = (e.clientX - notesOffsetX) + "px";
+  floatingNotes.style.top  = (e.clientY - notesOffsetY) + "px";
+});
+document.addEventListener("mouseup", () => {
+  notesDrag = false;
+  floatingNotes.classList.remove("dragging");
+});
+
+floatingNotesHeader.addEventListener("touchstart", e => {
+  const t = e.touches[0];
+  notesDrag = true;
+  notesOffsetX = t.clientX - floatingNotes.offsetLeft;
+  notesOffsetY = t.clientY - floatingNotes.offsetTop;
+  floatingNotes.classList.add("dragging");
+  e.preventDefault();
+}, { passive: false });
+document.addEventListener("touchmove", e => {
+  if (!notesDrag) return;
+  const t = e.touches[0];
+  floatingNotes.style.left = (t.clientX - notesOffsetX) + "px";
+  floatingNotes.style.top  = (t.clientY - notesOffsetY) + "px";
+}, { passive: false });
+document.addEventListener("touchend", () => {
+  notesDrag = false;
+  floatingNotes.classList.remove("dragging");
+});
+
+/* ===== Init ===== */
+initTabs(); 
+setMode("move");
+saveState();
+</script>
+<div style="position:absolute; bottom:4px; right:8px; font-size:10px; color:#bbb;">
+  Created by DC Daniel Romano (OFD)
+</div>
+  <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("service-worker.js")
+        .catch(err => {
+          console.error("Service worker registration failed:", err);
+        });
+    });
+  }
+</script>
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
