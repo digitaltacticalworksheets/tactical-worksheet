@@ -399,20 +399,17 @@
     background: #000;
   }
 
-/* Tablet / iPad layout */
+  /* Tablet / iPad layout */
 @media (max-width: 1100px) {
-
-  /* Keep sidebar vertical on the left */
   #board {
-    flex-direction: row; 
+    flex-direction: column;
   }
 
-  /* Sidebar remains full height on the left */
   #sidebar {
-    width: 250px;             /* or whatever your normal width is */
-    max-height: none;         
-    border-right: 1px solid #444;
-    border-bottom: none;
+    width: 100%;
+    max-height: 35vh;
+    border-right: none;
+    border-bottom: 1px solid #444;
     overflow-y: auto;
   }
 
@@ -422,15 +419,28 @@
 
   #worksheet {
     padding: 10px;
+    /* NEW: keep the scaled map anchored in the top-left instead of centered */
     justify-content: flex-start;
     align-items: flex-start;
   }
 
-  /* Scale entire worksheet on tablets */
+  /* NEW: scale the entire worksheet (image + tiles) down a bit on tablets */
   #mapWrapper {
-    transform: scale(0.9);        /* adjust if needed */
+    transform: scale(0.9);        /* try 0.85 or 0.8 if you want it smaller */
     transform-origin: top left;
   }
+}
+
+@media print {
+  body { background: #fff; display: block; }
+  #toolbar { display: none !important; }
+  #board { display: block; }
+  #workspaceContainer { display: block; }
+  #tabBar { display: none; }
+  #worksheet { display: block; padding: 0; overflow: visible; }
+  #floatingNotes { display: none !important; }
+  #sidebar { display: none !important; }
+  #mapWrapper { box-shadow: none; }
 }
 
 
@@ -1797,10 +1807,12 @@ document.getElementById("btnAutoStack").onclick = () => {
   saveState();
 };
 
-/* Floating Notes drag */
+/* ===== Floating Notes drag (fixed, clamped, unified) ===== */
+
 let notesDrag = false;
 let notesOffsetX = 0, notesOffsetY = 0;
 
+/* Mouse start */
 floatingNotesHeader.addEventListener("mousedown", e => {
   notesDrag = true;
   notesOffsetX = e.clientX - floatingNotes.offsetLeft;
@@ -1808,16 +1820,36 @@ floatingNotesHeader.addEventListener("mousedown", e => {
   floatingNotes.classList.add("dragging");
   e.preventDefault();
 });
+
+/* Mouse move (clamped) */
 document.addEventListener("mousemove", e => {
   if (!notesDrag) return;
-  floatingNotes.style.left = (e.clientX - notesOffsetX) + "px";
-  floatingNotes.style.top  = (e.clientY - notesOffsetY) + "px";
+
+  const headerHeight = floatingNotesHeader.offsetHeight || 30;
+  const margin = 8;
+
+  let newLeft = e.clientX - notesOffsetX;
+  let newTop  = e.clientY - notesOffsetY;
+
+  // Horizontal clamp
+  const maxLeft = window.innerWidth - floatingNotes.offsetWidth - margin;
+  newLeft = Math.max(margin, Math.min(maxLeft, newLeft));
+
+  // Vertical clamp (keep header visible)
+  const maxTop = window.innerHeight - headerHeight - margin;
+  newTop = Math.max(margin, Math.min(maxTop, newTop));
+
+  floatingNotes.style.left = newLeft + "px";
+  floatingNotes.style.top  = newTop  + "px";
 });
+
+/* Mouse end */
 document.addEventListener("mouseup", () => {
   notesDrag = false;
   floatingNotes.classList.remove("dragging");
 });
 
+/* Touch start */
 floatingNotesHeader.addEventListener("touchstart", e => {
   const t = e.touches[0];
   notesDrag = true;
@@ -1826,16 +1858,38 @@ floatingNotesHeader.addEventListener("touchstart", e => {
   floatingNotes.classList.add("dragging");
   e.preventDefault();
 }, { passive: false });
+
+/* Touch move (clamped) */
 document.addEventListener("touchmove", e => {
   if (!notesDrag) return;
+
   const t = e.touches[0];
-  floatingNotes.style.left = (t.clientX - notesOffsetX) + "px";
-  floatingNotes.style.top  = (t.clientY - notesOffsetY) + "px";
+  const headerHeight = floatingNotesHeader.offsetHeight || 30;
+  const margin = 8;
+
+  let newLeft = t.clientX - notesOffsetX;
+  let newTop  = t.clientY - notesOffsetY;
+
+  // Horizontal clamp
+  const maxLeft = window.innerWidth - floatingNotes.offsetWidth - margin;
+  newLeft = Math.max(margin, Math.min(maxLeft, newLeft));
+
+  // Vertical clamp (keep header visible)
+  const maxTop = window.innerHeight - headerHeight - margin;
+  newTop = Math.max(margin, Math.min(maxTop, newTop));
+
+  floatingNotes.style.left = newLeft + "px";
+  floatingNotes.style.top  = newTop  + "px";
+
+  e.preventDefault();
 }, { passive: false });
+
+/* Touch end */
 document.addEventListener("touchend", () => {
   notesDrag = false;
   floatingNotes.classList.remove("dragging");
 });
+
 
 
 
@@ -1862,5 +1916,3 @@ saveState();
 
 </body>
 </html>
-
-
