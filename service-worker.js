@@ -1,6 +1,6 @@
 const CACHE_NAME = "dtw-cache-v1";
 const URLS_TO_CACHE = [
-  "Digital Tactical Worksheet.html",
+  "index.html",
   "plain worksheet.png",
   "worksheet.png",
   "blank worksheet.png",
@@ -34,3 +34,4 @@ self.addEventListener("fetch", event => {
     caches.match(event.request).then(resp => resp || fetch(event.request))
   );
 });
+
