@@ -519,6 +519,41 @@
     background: #4a148c;
     color: #fff;
   }
+  #notesTabPanel {
+  display: none;
+  width: 100%;
+  max-width: 900px;
+  margin: 10px auto;
+  background: #1e1e1e;
+  color: #f5f5f5;
+  border-radius: 6px;
+  padding: 10px 12px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.6);
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+/* Each note block inside Notes tab */
+.notes-tab-item {
+  border-bottom: 1px solid #444;
+  padding: 6px 4px;
+}
+
+.notes-tab-item:last-child {
+  border-bottom: none;
+}
+
+.notes-tab-item .notes-tab-header {
+  font-weight: bold;
+  margin-bottom: 2px;
+  color: #ffeb3b; /* tab name + label */
+}
+
+.notes-tab-item .notes-tab-body {
+  color: #f5f5f5;
+}
+
   </style>
 
 
@@ -539,16 +574,16 @@
 
     <div class="spacer"></div>
 
-    <button id="btnAutoStack" title="Auto Organize">Organize Units</button>
-    <button id="initParBtn">Initiate PAR</button>
+    <button id="btnAutoStack" title="Auto Organize">Sort Units</button>
+    <button id="initParBtn">PAR</button>
 
     <div class="spacer"></div>
 
     <button id="btnModePen" title="Draw Lines">Draw</button>
     <button id="btnModeErase" title="Erase Drawing">Erase</button>
-    <button id="btnModeCheck" title="Place Checkmarks">Check</button>
+    <button id="btnModeCheck" title="Place Checkmarks">Chk</button>
     <button id="btnText">Text</button>
-    <button id="btnDelete" title="Delete Selected">Delete Tile</button>
+    <button id="btnDelete" title="Delete Selected">Delete</button>
     <button id="btnUndo">Undo</button>
     <button id="btnRedo">Redo</button>
     <button id="btnSaveLayout">Save</button>
@@ -613,6 +648,7 @@
           <img id="worksheetImage" src="plain worksheet.png" alt="Worksheet" />
           <canvas id="drawCanvas"></canvas>
         </div>
+        <div id="notesTabPanel" style="display:none;"></div>
       </div>
     </div>
   </div>
@@ -898,10 +934,21 @@ const DEFAULT_LAYOUT = {
       "history": [],
       "historyIndex": -1,
       "canvasDataURL": null
+    },
+    {
+      "id": 9999,
+      "name": "Notes",
+      "bgImage": "blank worksheet.png",
+      "tiles": [],
+      "history": [],
+      "historyIndex": -1,
+      "canvasDataURL": null,
+      "isNotesTab": true
     }
   ],
   "currentTabId": 1
 };
+
 
 
 const GRID = 10;
@@ -982,6 +1029,8 @@ function renderTabBar() {
 
     tabBar.insertBefore(btn, btnAddTab);
   });
+ 
+
 }
 
 function switchTab(newId) {
@@ -1047,9 +1096,37 @@ function loadTabFromMemory(id) {
   const tab = tabs.find(t => t.id === id);
   if (!tab) return;
 
+  const notesPanel = document.getElementById("notesTabPanel");
+
+  // NOTES TAB SPECIAL CASE
+  if (tab.isNotesTab) {
+    // Hide map/canvas
+    mapWrapper.style.display = "none";
+
+    // Clear any stray tiles from previous tab view
+    [...mapWrapper.querySelectorAll(".unit-tile")].forEach(t => t.remove());
+    ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+
+    // Show global notes in big panel
+    if (notesPanel) {
+      notesPanel.style.display = "block";
+      showGlobalNotesInNotesTab();  // we'll define this next
+    }
+
+    // We still want floating notes hidden in this view
+    floatingNotes.style.display = "none";
+    return;
+  }
+
+  // NORMAL TABS
+  if (notesPanel) {
+    notesPanel.style.display = "none";
+  }
+  mapWrapper.style.display = "inline-block";
+
   [...mapWrapper.querySelectorAll(".unit-tile")].forEach(t => t.remove());
   ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-  
+
   worksheetImage.src = tab.bgImage;
 
   tab.tiles.forEach(d => {
@@ -1073,9 +1150,10 @@ function loadTabFromMemory(id) {
 
   history = [...tab.history];
   historyIndex = tab.historyIndex;
-  
+
   refreshNotesList();
 }
+
 
 btnAddTab.onclick = () => {
   const name = prompt("Enter Name for new Tab:", "Sheet " + (tabs.length + 1));
@@ -1198,7 +1276,7 @@ function endParCycle() {
 
 const parBtn = document.getElementById("initParBtn");
 if (parBtn) {
-    parBtn.textContent = "Initiate PAR";
+    parBtn.textContent = "PAR";
     parBtn.classList.remove("par-active");  // remove when PAR ends
 }
 
@@ -1383,10 +1461,162 @@ function select(el) {
   selected = el;
   selected.classList.add("selected");
 }
+function showGlobalNotesInNotesTab() {
+  const notesPanel = document.getElementById("notesTabPanel");
+  if (!notesPanel) return;
+
+  notesPanel.innerHTML = "";
+  let noteCount = 0;
+
+  // Gather notes from each tab's stored tiles
+  tabs.forEach(tab => {
+    if (!tab.tiles || tab.tiles.length === 0) return;
+
+    tab.tiles.forEach(tileData => {
+      if (!tileData.note) return;
+
+      noteCount++;
+
+      const item = document.createElement("div");
+      item.className = "notes-tab-item";
+
+      const header = document.createElement("div");
+      header.className = "notes-tab-header";
+      header.textContent = `[${tab.name}] ${tileData.label}`;
+
+      const body = document.createElement("div");
+      body.className = "notes-tab-body";
+      body.textContent = tileData.note;
+
+      item.appendChild(header);
+      item.appendChild(body);
+
+      // Click to jump back to that tab & tile
+      item.onclick = () => {
+        currentTabId = tab.id;
+        renderTabBar();
+        loadTabFromMemory(tab.id);
+
+        // Try to find and scroll to the tile
+        const candidates = [...mapWrapper.querySelectorAll(".unit-tile")];
+        const match = candidates.find(t => t.textContent.trim() === tileData.label);
+        if (match) {
+          setMode("move");
+          select(match);
+          match.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "center"
+          });
+        }
+      };
+
+      notesPanel.appendChild(item);
+    });
+  });
+
+  // Include PAR log entries, if any
+  if (typeof parLogEntries !== "undefined" && Array.isArray(parLogEntries)) {
+    parLogEntries.forEach(text => {
+      noteCount++;
+      const item = document.createElement("div");
+      item.className = "notes-tab-item";
+      const header = document.createElement("div");
+      header.className = "notes-tab-header";
+      header.textContent = "[PAR Log]";
+
+      const body = document.createElement("div");
+      body.className = "notes-tab-body";
+      body.textContent = text;
+
+      item.appendChild(header);
+      item.appendChild(body);
+      notesPanel.appendChild(item);
+    });
+  }
+
+  if (!noteCount) {
+    const empty = document.createElement("div");
+    empty.style.padding = "8px 4px";
+    empty.textContent = "No notes recorded yet.";
+    notesPanel.appendChild(empty);
+  }
+}
 
 function refreshNotesList() {
   notesList.innerHTML = "";
   let tileNoteCount = 0;
+
+  function showGlobalNotes() {
+  notesList.innerHTML = "";
+  let noteCount = 0;
+
+  // Gather notes from each tab's stored tiles
+  tabs.forEach(tab => {
+    if (!tab.tiles || tab.tiles.length === 0) return;
+
+    tab.tiles.forEach(tileData => {
+      if (!tileData.note) return;
+
+      noteCount++;
+
+      const item = document.createElement("div");
+      item.className = "note-item";
+
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "note-label";
+      // [TabName] UnitLabel:
+      labelSpan.textContent = `[${tab.name}] ${tileData.label}:`;
+
+      const noteSpan = document.createElement("span");
+      noteSpan.className = "note-text";
+      noteSpan.textContent = " " + tileData.note;
+
+      item.appendChild(labelSpan);
+      item.appendChild(noteSpan);
+
+      // Optional: click to jump to that tab + unit
+      item.onclick = () => {
+        // Switch to that tab, scroll to that unit tile if present
+        loadTabFromMemory(tab.id);
+        currentTabId = tab.id;
+        renderTabBar();
+
+        // Try to find the matching tile on the board
+        const candidates = [...mapWrapper.querySelectorAll(".unit-tile")];
+        const match = candidates.find(t => t.textContent.trim() === tileData.label);
+        if (match) {
+          setMode("move");
+          select(match);
+          match.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "center"
+          });
+        }
+      };
+
+      notesList.appendChild(item);
+    });
+  });
+
+  // Optional: include PAR log entries if you're using parLogEntries[]
+  if (typeof parLogEntries !== "undefined" && Array.isArray(parLogEntries)) {
+    parLogEntries.forEach(text => {
+      const item = document.createElement("div");
+      item.className = "note-item par-log";
+      item.textContent = text;
+      notesList.appendChild(item);
+      noteCount++;
+    });
+  }
+
+  const notesBox = document.getElementById("floatingNotes");
+  if (notesBox) {
+    notesBox.style.display = noteCount > 0 ? "block" : "none";
+  }
+}
+
 
   // Tile-based notes (per-unit notes using dataset.note)
   const tiles = [...mapWrapper.querySelectorAll(".unit-tile")];
@@ -1813,10 +2043,33 @@ function stopTileDragTouch(e) {
 
   if (!touchMoved && draggingTile) {
     const now = Date.now();
+
     if (lastTapTile === draggingTile && (now - lastTapTime) < DOUBLE_TAP_MS) {
-      duplicateTileGeneric(draggingTile);
+      // ✅ Second tap within double-tap window
+      const tile = draggingTile;
+      const type = tile.dataset.type || "";
+      const isTextTile =
+        type.toLowerCase() === "text" || tile.classList.contains("texttile");
+
+      if (parModeActive && tile.classList.contains("par-pending") && !isTextTile) {
+        // 🔥 PAR double-tap on touch: same behavior as mouse double-click
+        const labelFromData = tile.dataset.label || tile.dataset.unit || "";
+        const unitLabel = labelFromData || tile.textContent.trim();
+        const time = formatParTime();
+
+        logParNote(`PAR – ${unitLabel} – ${time}`);
+        tile.classList.remove("par-pending");
+        tile.classList.add("par-complete");
+      } else {
+        // Normal double-tap: duplicate tile (only in move mode)
+        if (mode === "move") {
+          duplicateTileGeneric(tile);
+        }
+      }
+
       lastTapTile = null;
     } else {
+      // First tap: arm the double-tap detector
       lastTapTile = draggingTile;
       lastTapTime = now;
     }
@@ -1828,6 +2081,7 @@ function stopTileDragTouch(e) {
   document.removeEventListener("touchmove", tileDragTouch);
   document.removeEventListener("touchend", stopTileDragTouch);
 }
+
 
 /* Duplicate tile */
 function duplicateTileGeneric(orig) {
