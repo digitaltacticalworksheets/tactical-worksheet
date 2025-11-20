@@ -1316,23 +1316,42 @@ loadFileInput.onchange = e => {
 
 /* Notes on tiles */
 function openNotePrompt(tile) {
-  const current = tile.dataset.note || "";
-  const label   = tile.textContent;
-  const note = prompt(`Enter note for ${label}:\n(Leave blank to clear)`, current);
-  
-  if (note !== null) {
-    const trimmed = note.trim();
+  const stored = tile.dataset.note || "";
+  const label  = tile.textContent;
+
+  // Strip existing [HH:MM] prefix if present, so the user edits plain text
+  const currentPlain = stored.replace(/^\[\d{2}:\d{2}\]\s*/, "");
+
+  const input = prompt(
+    `Enter note for ${label}:\n(Leave blank to clear)`,
+    currentPlain
+  );
+
+  if (input !== null) {
+    const trimmed = input.trim();
+
     if (trimmed) {
-      tile.dataset.note = trimmed;
-      tile.title = trimmed;
+      // Auto-timestamp in 24-hour format [HH:MM]
+      const now  = new Date();
+      const pad2 = n => String(n).padStart(2, "0");
+      const timeStr = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+
+      const finalNote = `[${timeStr}] ${trimmed}`;
+
+      tile.dataset.note = finalNote;
+      tile.title        = finalNote;
     } else {
+      // Clear note
       delete tile.dataset.note;
       tile.title = "";
     }
+
     saveState();
   }
+
   setMode("move");
 }
+
 
 /* Tile creation */
 function createTileElement(type, cssClass, text) {
@@ -1907,5 +1926,6 @@ saveState();
 
 </body>
 </html>
+
 
 
