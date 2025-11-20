@@ -1,7 +1,7 @@
 {
   "name": "Digital Tactical Worksheet",
   "short_name": "DTW",
-  "start_url": "https://digitaltacticalworksheets.github.io/tactical-worksheet/",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
