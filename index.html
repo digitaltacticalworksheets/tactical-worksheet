@@ -59,7 +59,7 @@
   #btnRescue { background: #2e7d32; color: #fff; }
   #btnChief  { background: #fbc02d; color: #000; }
   #btnRIT    { background: #ff6f00; color: #000; }
-  #btnOther  { background: #757575; color: #fff; }
+  #btnOther  { background: #b6c388; color: #000; }
 
   /* Utility buttons */
   #btnDelete      { background: #444;    color: #fff; }
@@ -76,7 +76,12 @@
   #btnModePen   { background: #8e24aa; color: #fff; }
   #btnModeErase { background: #c62828; color: #fff; }
   #btnModeCheck { background: #2e7d32; color: #fff; }
-  #btnModeNote  { background: #ffb300; color: #000; }
+  #btnText {
+  background: #607d8b;
+  color: #fff;
+}
+
+  
 
   #toolbar button:hover {
     filter: brightness(1.1);
@@ -302,7 +307,7 @@
   .unit-tile.rescue { background: #a5d6a7; }
   .unit-tile.chief  { background: #fff59d; }
   .unit-tile.rit    { background: #ffcc80; }
-  .unit-tile.other  { background: #e0e0e0; }
+  .unit-tile.other  { background: #b6c388; }
 
   .unit-tile.selected {
     outline: 2px solid #000;
@@ -325,6 +330,19 @@
     box-shadow: 0 0 2px rgba(0,0,0,0.7);
     pointer-events: none;
   }
+.unit-tile.texttile {
+  background: #eee;
+  color: #111;
+  border: 1px solid #444;
+  padding: 4px 7px;
+  min-width: 50px;
+  max-width: 300px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
 
   .spacer { flex-grow: 1; }
 
@@ -336,7 +354,7 @@
   }
 
   .note-item {
-    font-size: 11px;
+    font-size: 14px;
     color: #f5f5f5;
     padding: 3px 4px;
     margin-bottom: 2px;
@@ -461,12 +479,12 @@
 
     <div class="spacer"></div>
 
-    <button id="btnAutoStack" title="Auto Organize">Stack</button>
-    <button id="btnModeMove" title="Move Tiles">Move</button>
+    <button id="btnAutoStack" title="Auto Organize">Organize Units</button>
     <button id="btnModePen" title="Draw Lines">Draw</button>
     <button id="btnModeErase" title="Erase Drawing">Erase</button>
     <button id="btnModeCheck" title="Place Checkmarks">Check</button>
-    <button id="btnModeNote" title="Add Note to Tile">Note</button>
+    <button id="btnText">Text</button>
+
 
     <div class="spacer"></div>
 
@@ -581,6 +599,256 @@ const sidebar             = document.getElementById("sidebar");
 const tabBar    = document.getElementById("tabBar");
 const btnAddTab = document.getElementById("btnAddTab");
 
+// Embedded default JSON layout (Option A)
+const DEFAULT_LAYOUT = {
+  "tabs": [
+    {
+      "id": 1,
+      "name": "Main Board",
+      "bgImage": "plain worksheet.png",
+      "tiles": [
+        {
+          "type": "text",
+          "cssClass": "texttile",
+          "left": "840px",
+          "top": "580px",
+          "label": "SIDE A",
+          "note": ""
+        },
+        {
+          "type": "text",
+          "cssClass": "texttile",
+          "left": "830px",
+          "top": "250px",
+          "label": "SIDE C",
+          "note": ""
+        },
+        {
+          "type": "text",
+          "cssClass": "texttile",
+          "left": "1040px",
+          "top": "420px",
+          "label": "SIDE D",
+          "note": ""
+        },
+        {
+          "type": "text",
+          "cssClass": "texttile",
+          "left": "610px",
+          "top": "410px",
+          "label": "SIDE B",
+          "note": ""
+        },
+        {
+          "type": "text",
+          "cssClass": "texttile",
+          "left": "-10px",
+          "top": "-10px",
+          "label": "DISPATCHED UNITS",
+          "note": ""
+        },
+        {
+          "type": "text",
+          "cssClass": "texttile",
+          "left": "60px",
+          "top": "170px",
+          "label": "ON SCENE",
+          "note": ""
+        }
+      ],
+      "history": [],
+      "historyIndex": -1,
+      "canvasDataURL": null
+    },
+    {
+      "id": 2,
+      "name": "Benchmarks",
+      "bgImage": "blank worksheet.png",
+      "tiles": [
+        {
+          "type": "Engine",
+          "cssClass": "engine",
+          "left": "20px",
+          "top": "20px",
+          "label": "Water on the fire",
+          "note": ""
+        },
+        {
+          "type": "Engine",
+          "cssClass": "engine",
+          "left": "20px",
+          "top": "48px",
+          "label": "Water Supply",
+          "note": ""
+        },
+        {
+          "type": "Engine",
+          "cssClass": "engine",
+          "left": "20px",
+          "top": "76px",
+          "label": "Fire Knocked Down",
+          "note": ""
+        },
+        {
+          "type": "Engine",
+          "cssClass": "engine",
+          "left": "20px",
+          "top": "104px",
+          "label": "Fire Out",
+          "note": ""
+        },
+        {
+          "type": "Tower",
+          "cssClass": "tower",
+          "left": "200px",
+          "top": "20px",
+          "label": "Primary All Clear",
+          "note": ""
+        },
+        {
+          "type": "Tower",
+          "cssClass": "tower",
+          "left": "200px",
+          "top": "48px",
+          "label": "2nd egress/ladders",
+          "note": ""
+        },
+           {
+          "type": "Tower",
+          "cssClass": "tower",
+          "left": "200px",
+          "top": "76px",
+          "label": "Secondary Search",
+          "note": ""
+        },
+         {
+          "type": "Tower",
+          "cssClass": "tower",
+          "left": "200px",
+          "top": "48px",
+          "label": "2nd egress/ladders",
+          "note": ""
+        },
+          {
+          "type": "Rescue",
+          "cssClass": "rescue",
+          "left": "380px",
+          "top": "48px",
+          "label": "Ready Rescue",
+          "note": ""
+        },
+         {
+          "type": "Rescue",
+          "cssClass": "rescue",
+          "left": "380px",
+          "top": "20px",
+          "label": "2-out",
+          "note": ""
+        },
+       {
+          "type": "Chief",
+          "cssClass": "chief",
+          "left": "740px",
+          "top": "20px",
+          "label": "Safety Officer",
+          "note": ""
+        },
+       {
+          "type": "Tower",
+          "cssClass": "tower",
+          "left": "200px",
+          "top": "104px",
+          "label": "Primary Vent",
+          "note": ""
+        },
+        {
+          "type": "Other",
+          "cssClass": "other",
+          "left": "920px",
+          "top": "20px",
+          "label": "Fire Pump/FDC",
+          "note": ""
+        },
+         {
+          "type": "RIT",
+          "cssClass": "rit",
+          "left": "560px",
+          "top": "48px",
+          "label": "Elec. Utilities",
+          "note": ""
+        },
+        {
+          "type": "RIT",
+          "cssClass": "rit",
+          "left": "560px",
+          "top": "76px",
+          "label": "Gas Utilities",
+          "note": ""
+        },
+         {
+          "type": "Other",
+          "cssClass": "other",
+          "left": "920px",
+          "top": "48px",
+          "label": "Salvage",
+          "note": ""
+        },
+         {
+          "type": "Other",
+          "cssClass": "other",
+          "left": "920px",
+          "top": "76px",
+          "label": "Overhaul",
+          "note": ""
+        },
+        {
+          "type": "Rescue",
+          "cssClass": "rescue",
+          "left": "380px",
+          "top": "76px",
+          "label": "Rehab",
+          "note": ""
+        },
+     
+     
+       {
+          "type": "RIT",
+          "cssClass": "rit",
+          "left": "560px",
+          "top": "20px",
+          "label": "RIT Established",
+          "note": ""
+        },
+      
+      
+        
+      ],
+      "history": [],
+      "historyIndex": -1,
+      "canvasDataURL": null
+    },
+    {
+      "id": 3,
+      "name": "Tactical Worksheet",
+      "bgImage": "worksheet.png",
+      "tiles": [],
+      "history": [],
+      "historyIndex": -1,
+      "canvasDataURL": null
+    },
+    {
+      "id": 1763592420813,
+      "name": "Blank",
+      "bgImage": "blank worksheet.png",
+      "tiles": [],
+      "history": [],
+      "historyIndex": -1,
+      "canvasDataURL": null
+    }
+  ],
+  "currentTabId": 1
+};
+
 const GRID = 10;
 
 let mode = "move";
@@ -607,46 +875,28 @@ let tabs = [];
 let currentTabId = null;
 
 function initTabs() {
-
-  // TAB 1 — Main Board
-  const mainBoard = {
-    id: 1,
-    name: "Main Board",
-    bgImage: "plain worksheet.png",
-    tiles: [],
-    history: [],
-    historyIndex: -1,
-    canvasDataURL: null
-  };
-
-  // TAB 2 — Blank Sheet
-  const blankSheet = {
-    id: 2,
-    name: "Blank Sheet",
-    bgImage: "blank worksheet.png",   // <-- make sure this file exists in your repo
-    tiles: [],
-    history: [],
-    historyIndex: -1,
-    canvasDataURL: null
-  };
-
-  // TAB 3 — Tactical Worksheet
-  const tacticalSheet = {
-    id: 3,
-    name: "Tactical Worksheet",
-    bgImage: "worksheet.png",   // <-- make sure this file exists in your repo
-    tiles: [],
-    history: [],
-    historyIndex: -1,
-    canvasDataURL: null
-  };
-
-  tabs = [mainBoard, blankSheet, tacticalSheet];
-  currentTabId = 1; // start on Main Board
+  // Option A: use embedded JSON layout as the default board
+  if (DEFAULT_LAYOUT && Array.isArray(DEFAULT_LAYOUT.tabs) && DEFAULT_LAYOUT.tabs.length > 0) {
+    tabs = DEFAULT_LAYOUT.tabs;
+    currentTabId = DEFAULT_LAYOUT.currentTabId || DEFAULT_LAYOUT.tabs[0].id;
+  } else {
+    // Fallback: if embedded layout is missing, keep a single blank Main Board
+    tabs = [{
+      id: 1,
+      name: "Main Board",
+      bgImage: "plain worksheet.png",
+      tiles: [],
+      history: [],
+      historyIndex: -1,
+      canvasDataURL: null
+    }];
+    currentTabId = 1;
+  }
 
   renderTabBar();
-  loadTabFromMemory(2); // load Blank Board's background/image
+  loadTabFromMemory(currentTabId);
 }
+
 
 
 function renderTabBar() {
@@ -935,11 +1185,18 @@ function setMode(m) {
              :  m === "note"  ? "Note"
              :  "Move/Select");
 }
-document.getElementById("btnModeMove").onclick  = () => setMode("move");
-document.getElementById("btnModePen").onclick   = () => setMode("pen");
-document.getElementById("btnModeErase").onclick = () => setMode("erase");
-document.getElementById("btnModeCheck").onclick = () => setMode("check");
-document.getElementById("btnModeNote").onclick  = () => setMode("note");
+const btnModeMove  = document.getElementById("btnModeMove");
+const btnModePen   = document.getElementById("btnModePen");
+const btnModeErase = document.getElementById("btnModeErase");
+const btnModeCheck = document.getElementById("btnModeCheck");
+const btnModeNote  = document.getElementById("btnModeNote");
+
+if (btnModeMove)  btnModeMove.onclick  = () => setMode("move");
+if (btnModePen)   btnModePen.onclick   = () => setMode("pen");
+if (btnModeErase) btnModeErase.onclick = () => setMode("erase");
+if (btnModeCheck) btnModeCheck.onclick = () => setMode("check");
+if (btnModeNote)  btnModeNote.onclick  = () => setMode("note");
+
 
 /* ===== Collapsible preset groups ===== */
 document.querySelectorAll(".collapsible-header").forEach(header => {
@@ -1137,18 +1394,44 @@ function openNotePrompt(tile) {
 /* ===== Tile creation ===== */
 function createTileElement(type, cssClass, text) {
   const tile = document.createElement("div");
-  tile.className = "unit-tile " + cssClass;
-  tile.dataset.type = type;
-  tile.textContent = text;
+
+  // Convert type to lowercase for consistency
+  const lower = type.toLowerCase();
+
+  // TEXT TILE SPECIAL CASE
+  if (lower === "text") {
+    tile.className = "unit-tile texttile";
+    tile.dataset.type = "text";
+    tile.textContent = text;
+  }
+  else if (lower === "label") {
+    tile.className = "unit-tile label";
+    tile.dataset.type = "Label";
+    tile.dataset.permanent = "true";
+    tile.textContent = text;
+  }
+  else {
+    // Normal engine/tower/rescue/etc
+    tile.className = "unit-tile " + cssClass;
+    tile.dataset.type = type;
+    tile.textContent = text;
+  }
+
   tile.style.left = "10px";
   tile.style.top  = "10px";
 
+  // All tiles share the same interactions
   tile.addEventListener("mousedown", startTileDragMouse);
   tile.addEventListener("touchstart", startTileDragTouch, { passive: false });
+
+  // Duplicate on double click
   tile.ondblclick = duplicateTileMouse;
 
   return tile;
 }
+
+
+
 function createTile(type, cssClass) {
   const label = prompt(`Enter ${type} label:`);
   if (!label) return;
@@ -1165,6 +1448,8 @@ document.getElementById("btnRescue").onclick = () => createTile("Rescue","rescue
 document.getElementById("btnChief").onclick  = () => createTile("Chief","chief");
 document.getElementById("btnRIT").onclick    = () => createTile("RIT","rit");
 document.getElementById("btnOther").onclick  = () => createTile("Other","other");
+document.getElementById("btnText").onclick = () => createTile("Text","texttile");
+
 
 /*Help Button*/
 document.getElementById("btnHelp").onclick = () => {
@@ -1241,7 +1526,7 @@ buildPresetButtons("rescuePresets", [
 
 /* Special (RIT color) */
 buildPresetButtons("ritPresets", [
-  "HR-1","HAZ-1", "HR1 Outside","HAZ1 Outside"
+  "HR-1","HAZ-1", "HR-1 Outside","HAZ-1 Outside"
 ], "RIT","rit","preset-rit");
 
 /* Command (Chief color) */
@@ -1427,7 +1712,7 @@ function duplicateTileMouse(e) {
 function drawCheckmark(x, y) {
   ctx.save();
   ctx.globalCompositeOperation = "source-over";
-  ctx.strokeStyle = "lime";
+  ctx.strokeStyle = "red";
   ctx.lineWidth = 3;
   ctx.lineCap = "round";
   ctx.beginPath();
@@ -1464,7 +1749,7 @@ drawCanvas.addEventListener("mousemove", e => {
 
   if (mode === "pen") {
     ctx.globalCompositeOperation = "source-over";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 4;
     ctx.strokeStyle = "red";
   } else if (mode === "erase") {
     ctx.globalCompositeOperation = "destination-out";
@@ -1525,7 +1810,7 @@ drawCanvas.addEventListener("touchmove", e => {
     ctx.strokeStyle = "red";
   } else if (mode === "erase") {
     ctx.globalCompositeOperation = "destination-out";
-    ctx.lineWidth = 15;
+    ctx.lineWidth = 20;
     ctx.strokeStyle = "rgba(0,0,0,1)";
   }
 
@@ -1578,15 +1863,22 @@ document.getElementById("btnAutoStack").onclick = () => {
   };
 
   const tiles = [...mapWrapper.querySelectorAll(".unit-tile")];
-  tiles.forEach(t => {
-    const type = t.dataset.type.toLowerCase();
-    if      (type === "engine") stacks.engine.push(t);
-    else if (type === "tower")  stacks.tower.push(t);
-    else if (type === "rescue") stacks.rescue.push(t);
-    else if (type === "rit")    stacks.rit.push(t);
-    else if (type === "chief")  stacks.chief.push(t);
-    else                        stacks.other.push(t);
-  });
+tiles.forEach(t => {
+  const type = (t.dataset.type || "").toLowerCase();
+
+  // ⬅️ Skip text tiles so they stay where you placed them
+  if (type === "text") return;
+
+  
+
+  if      (type === "engine") stacks.engine.push(t);
+  else if (type === "tower")  stacks.tower.push(t);
+  else if (type === "rescue") stacks.rescue.push(t);
+  else if (type === "rit")    stacks.rit.push(t);
+  else if (type === "chief")  stacks.chief.push(t);
+  else                        stacks.other.push(t);
+});
+
 
   Object.entries(stacks).forEach(([key, list]) => {
     let x = colX[key];
@@ -1662,16 +1954,3 @@ saveState();
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
