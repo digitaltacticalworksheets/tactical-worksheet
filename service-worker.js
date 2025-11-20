@@ -4,7 +4,7 @@ const URLS_TO_CACHE = [
   "plain worksheet.png",
   "worksheet.png",
   "blank worksheet.png",
-  "ICS_flame_clean.ico",
+  "DTW_Icon.ico",
   "manifest.json"
 ];
 
@@ -34,4 +34,5 @@ self.addEventListener("fetch", event => {
     caches.match(event.request).then(resp => resp || fetch(event.request))
   );
 });
+
 
