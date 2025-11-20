@@ -1,285 +1,148 @@
-ICS COMMAND BOARD - USER INSTRUCTION MANUAL
-==============================================
-Version: 2025 Command Board Release
-Author: Daniel Romano
+Digital Tactical Worksheet – User Instruction Manual
+(2025 Edition)
 
-----------------------------------------------
 1. OVERVIEW
-----------------------------------------------
-The ICS Command Board is a standalone, browser-based incident
-command tool that allows drag-and-drop unit tiles, freehand
-drawing, notes, multi-tab worksheets, custom backgrounds, and
-layout saving/loading. It runs on desktops, tablets, iPads, and
-can be installed as a fullscreen web app.
+The Digital Tactical Worksheet is a browser-based incident command and accountability tool for real-time strategy, resource tracking, and situational awareness. It works on desktops, laptops, iPads, and tablets directly in your web browser — no installation required.
 
-You can use this tool for structure fires, MCIs, high-rise
-operations, wildland, training scenarios, and more.
+Use it for:
+- Structure fires
+- MCIs
+- High-rise operations
+- Wildland/brush events
+- Training and simulations
+- ICS instruction
 
-----------------------------------------------
-2. FILES INCLUDED
-----------------------------------------------
-index.html
-worksheet.png
-blank_worksheet.png
-ICS_Command_Board_Instruction_Manual.txt
-icons/ (PWA icons)
-service-worker.js
-manifest.json
+Access the program at:
+https://digitaltacticalworksheets.github.io/tactical-worksheets
 
-----------------------------------------------
-3. HOW TO OPEN THE PROGRAM
-----------------------------------------------
+2. HOW TO OPEN THE PROGRAM
+Desktop / Laptop:
+1. Open your preferred browser.
+2. Visit the web address above.
 
-DESKTOP / LAPTOP:
------------------
-Option A – Local File
-- Double-click index.html
-- The program opens in your default web browser.
+iPad / Tablet:
+1. Open Safari or Chrome.
+2. Navigate to the same URL.
+3. Rotate the device to Landscape mode.
+4. Use the Fullscreen button inside the program for maximum workspace.
 
-Option B – Installed Web App (recommended)
-- Open your GitHub Pages URL
-- In Chrome or Edge: menu → Apps → Install This Site as an App
-- A desktop/start menu shortcut will appear.
-
-iPAD / TABLET:
---------------
-Option A – Safari Browser
-- Open your GitHub Pages URL
-- Use Fullscreen mode inside the app for best view.
-
-Option B – Add to Home Screen (BEST)
-- Tap Share → Add to Home Screen
-- It launches fullscreen with no browser chrome.
-
-----------------------------------------------
-4. MAIN INTERFACE
-----------------------------------------------
-
-SIDEBAR (left side):
-- Preset unit buttons (Engine, Tower, Rescue, RIT, Chiefs)
+3. MAIN INTERFACE
+Sidebar (Left Side):
+- Unit creation buttons
 - Collapsible unit groups
-- Notes panel (can be opened and moved)
+- Notes list panel
+- Utility buttons
+The sidebar remains vertical at all screen sizes.
 
-WORKSHEET AREA (right side):
-- Displays the currently selected tab’s background
-- Allows tile dragging, drawing, checking, notes
-
-TOOLBAR (top):
-- Tile creation buttons
-- Mode controls (Move / Draw / Erase / Check / Note)
-- Utilities (Undo, Redo, Delete, Save Layout, Load Layout)
+Top Toolbar:
+- Tile controls (Add Unit, Add Text, Delete)
+- Mode controls (Move, Draw, Erase, Checkmark, Note)
+- Undo / Redo
+- Save Layout / Load Layout
 - Fullscreen button
 - Timer controls
-- “Change Worksheet” button
 
-----------------------------------------------
-5. TABS / MULTIPLE SHEETS
-----------------------------------------------
+Worksheet Area:
+Displays the active worksheet background, tiles, drawings, and notes. Tabs appear at the top to switch between different boards. The worksheet automatically scales on tablets to improve visibility.
 
-The app starts with TWO tabs:
+4. WORKSHEETS & TABS
+The program supports multiple worksheets (tabs). Each tab maintains its own:
+- Tiles
+- Notes
+- Drawings
+- Background image
+- Undo/redo history
 
-1. MAIN BOARD
-   - Background: worksheet.png
-   - Fully custom
+Tabs can be used for:
+- Main Board
+- Staging
+- RIT
+- Planning
+- Training
+- Accountability
 
-2. BLANK SHEET
-   - Background: blank_worksheet.png
-   - Freeform layout
+5. UNIT TILES
+Creating a Tile:
+Tap a unit button (Engine, Tower, Rescue, RIT, Chief, Other).
 
-Each tab has:
-- Its own tiles
-- Its own background
-- Its own drawing layer
-- Its own note list
-- Its own undo/redo history
+Moving a Tile:
+Use Move Mode, then drag to reposition.
 
-To switch tabs:
-- Tap/click the tab name at the top of the worksheet.
+Duplicating a Tile:
+Double-click the tile.
 
-Tiles stay ONLY on the tab where they were created.
+Deleting a Tile:
+Use Delete Mode or the Delete button.
 
-----------------------------------------------
-6. UNIT TILES
-----------------------------------------------
+6. TILE NOTES
+Adding or Editing Notes:
+Long-press a tile (hold without dragging). Enter your note and press OK.
 
-Creating a tile:
-- Click any preset button (Engine, RIT, Tower, etc.)
-- A color-coded tile appears on the worksheet.
+Notes Window:
+Displays all notes for the current worksheet. Selecting a note highlights its tile. This window can be moved freely and cannot be dragged off-screen.
 
-Moving a tile:
-- Click/tap + drag
+7. DRAWING & MARKUP TOOLS
+Draw Mode:
+Freehand drawing.
 
-Duplicating a tile:
-- Double-click the tile
+Erase Mode:
+Erases drawing strokes only.
 
-Deleting a tile:
-- Select Delete mode, then tap the tile
-OR
-- Tap the Delete button with a tile selected
+Checkmark Mode:
+Places ✓ marks on the worksheet.
 
-Long-press (mouse or touch):
-- Opens NOTE editor for the tile
+Move Mode:
+Default mode for repositioning tiles.
 
-----------------------------------------------
-7. TILE NOTES
-----------------------------------------------
+8. BACKGROUND IMAGES
+Changing the Background:
+Tap “Change Background” and select any image from your device. The worksheet updates immediately and the drawing canvas resizes to match the new image.
 
-Adding/editing notes:
-- LONG PRESS a tile (mouse: press & hold)
-- Type note → OK
-- A note icon appears on the tile
-- The floating notes list updates automatically
+Uses include:
+- Preplans
+- Maps
+- Aerial images
+- Floor plans
+- Custom ICS sheets
 
-Exiting back to Move Mode:
-- Automatic after closing a note
+9. SAVING & LOADING INCIDENT LAYOUTS (JSON)
+Save Layout:
+Downloads a JSON file containing everything:
+- Tiles and their positions
+- All notes
+- Drawings
+- Backgrounds
+- Tabs
+- Timer state
 
-Viewing notes:
-- Open Floating Notes Window
-- Tap any entry to jump to that tile
+Load Layout:
+Select a previously saved JSON file to restore your entire board exactly as it was. Perfect for continuing incidents, scenario setup, and after-action review.
 
-----------------------------------------------
-8. DRAWING / MARKUP
-----------------------------------------------
-
-Draw mode:
-- Allows freehand drawing on the worksheet
-
-Erase mode:
-- Erases ONLY drawing strokes (not tiles or image)
-
-Checkmark mode:
-- Single tap places a ✓ on the worksheet
-
-Move mode:
-- Default mode for dragging tiles
-
-----------------------------------------------
-9. BACKGROUND IMAGES
-----------------------------------------------
-
-The user can change the background on ANY tab:
-
-1. Tap “Change BG”
-2. Select ANY PNG/JPG/WebP file on your device
-3. Worksheet updates instantly
-4. Canvas resizes automatically
-5. The custom background is saved in that tab
-
-To restore defaults:
-- Switch to Main Board or Blank Sheet (their default images load)
-OR
-- Reload a saved layout
-
-----------------------------------------------
 10. FULLSCREEN MODE
-----------------------------------------------
+Desktop:
+Tap the Fullscreen button. Exit with ESC.
 
-Desktop/Laptop:
-- Click “Fullscreen”
-- Removes browser UI and enlarges worksheet
+Tablet:
+Tap Fullscreen for an expanded workspace.
 
-Exit fullscreen:
-- Press ESC
-- Or click “Exit Fullscreen”
+11. AUTO-STACK
+Organizes tiles automatically on the current worksheet, grouping similar units while leaving text labels untouched.
 
-iPad:
-- Use Add to Home Screen for TRUE fullscreen
-or
-- Use the Fullscreen button inside the program
+12. MOBILE / TABLET OPTIMIZATION
+Features:
+- Vertical sidebar
+- Scaled worksheet
+- Large touch-friendly buttons
+- Recommended Landscape orientation
 
-----------------------------------------------
-11. SAVING & LOADING LAYOUTS
-----------------------------------------------
+13. TROUBLESHOOTING
+Tiles won’t move: Ensure Move Mode is active.
+Notes won’t open: Long-press without dragging; ensure you’re not in Draw/Erase/Delete Mode.
+Notes window missing: It cannot leave the screen; drag it from the edge.
+Background won’t change: Use PNG/JPG/WebP.
+Layout won’t load: Choose a valid JSON layout file.
 
-Saving:
-- Click “Save Layout”
-- A .json file downloads containing:
-  - Tiles
-  - Notes
-  - Drawings
-  - Background images
-  - ALL tabs and states
-
-Loading:
-- Click “Load Layout”
-- Select a previously saved .json file
-
-Layout fully restores exactly as it was.
-
-----------------------------------------------
-12. AUTO-STACK
-----------------------------------------------
-
-Auto-Stack organizes tiles on the CURRENT TAB:
-- Sorts by type and groups similar units
-- Helpful during large incidents
-
-----------------------------------------------
-13. MOBILE / TABLET OPTIMIZATION
-----------------------------------------------
-
-The program automatically adjusts:
-- Sidebar moves to top on narrow screens
-- Worksheet remains full width
-- Buttons grow larger for finger input
-
-For best experience:
-- Use Landscape mode
-- Use Fullscreen mode
-- On iPad: install via Add to Home Screen
-
-----------------------------------------------
-14. PWA INSTALL (optional but recommended)
-----------------------------------------------
-
-Supported in Chrome, Edge, Safari (iPadOS 15+):
-
-1. Visit your GitHub Pages URL
-2. Browser menu → Install as App
-3. Opens in standalone window with no URL bar
-4. Works offline after first load
-
-----------------------------------------------
-15. TROUBLESHOOTING
-----------------------------------------------
-
-Tiles don’t move:
-- Make sure you are in MOVE mode
-
-Notes popup doesn't show:
-- Long press without dragging
-- Ensure you are not in DRAW mode
-
-Background won’t change:
-- Ensure PNG file is not corrupt
-
-Overlapping UI on iPad:
-- The responsive layout automatically fixes this
-- Turn tablet to landscape
-
-Program won’t install:
-- Check manifest.json and service-worker.js exist
-- Ensure you're using the HTTPS GitHub Pages URL
-
-----------------------------------------------
-16. VERSIONING & UPDATES
-----------------------------------------------
-
-When you publish updates:
-- Replace the index.html and JS in your GitHub repo
-- Users with PWA installed will auto-update on next load
-- Desktop users refresh to update
-
-----------------------------------------------
-17. CREDITS
-----------------------------------------------
-
-Created by:
-Daniel Romano
+14. CREDITS
+Created by: Daniel Romano
 District Chief, Orlando Fire Department
-
-Use allowed under Apache 2.0 License.
-
-----------------------------------------------
-END OF MANUAL
-----------------------------------------------
+Designed for incident command, training, and operational efficiency.
