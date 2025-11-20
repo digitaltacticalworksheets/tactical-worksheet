@@ -52,36 +52,49 @@
   }
 
   /* Tile button colors */
-  #btnEngine { background: #b71c1c; color: #fff; }
-  #btnTower  { background: #1565c0; color: #fff; }
-  #btnRescue { background: #2e7d32; color: #fff; }
-  #btnChief  { background: #fbc02d; color: #000; }
-  #btnRIT    { background: #f2721D; color: #000; }
-  #btnOther  { background: #b6c388; color: #000; }
+  #btnEngine { background: #b71c1c; color: #fff; font-weight: bold; }
+  #btnTower  { background: #1565c0; color: #fff; font-weight: bold; }
+  #btnRescue { background: #2e7d32; color: #fff; font-weight: bold;}
+  #btnChief  { background: #fbc02d; color: #000; font-weight: bold;}
+  #btnRIT    { background: #f2721D; color: #000; font-weight: bold; }
+  #btnOther  { background: #b6c388; color: #000; font-weight: bold;}
 
   /* Utility buttons */
-  #btnDelete      { background: #444;    color: #fff; }
-  #btnUndo        { background: #555;    color: #fff; }
-  #btnRedo        { background: #555;    color: #fff; }
-  #btnAutoStack   { background: #6a1b9a; color: #fff; }
-  #btnSaveLayout  { background: #00695c; color: #fff; }
-  #btnLoadLayout  { background: #0277bd; color: #fff; }
+  #btnDelete      { background: #ee0707; color: #fff; font-weight: bold;}
+  #btnUndo        { background: #555;    color: #fff; font-weight: bold; }
+  #btnRedo        { background: #555;    color: #fff; font-weight: bold; }
+  #btnAutoStack   { background: #f3a228; color: #000; font-weight: bold; }
+  #btnSaveLayout  { background: #00695c; color: #fff; font-weight: bold; }
+  #btnLoadLayout  { background: #0277bd; color: #fff; font-weight: bold; }
   #btnToggleSidebar { background: #fff; border: 1px solid #777; color: #333; }
-  #btnChangeBg    { background: #e65100; color: #fff; }
+  #btnChangeBg    { background: #e65100; color: #fff; font-weight: bold;}
 
   /* Modes */
   #btnModeMove  { background: #1976d2; color: #fff; }
-  #btnModePen   { background: #8e24aa; color: #fff; }
-  #btnModeErase { background: #c62828; color: #fff; }
-  #btnModeCheck { background: #2e7d32; color: #fff; }
+  #btnModePen   { background: #e60d0d; color: #fff; font-weight: bold; }
+  #btnModeErase { background: #ce588f; color: #fff; font-weight: bold;}
+  #btnModeCheck { background: #2e7d32; color: #fff; font-weight: bold;}
   #btnText {
     background: #607d8b;
-    color: #fff;
+    color: #fff; font-weight: bold;
   }
 
   #toolbar button:hover {
     filter: brightness(1.1);
   }
+  /* Normal state */
+#initParBtn {
+  background: #0277bd;  /* blue */
+  color: white;
+  font-weight: bold;
+}
+
+/* Active PAR state */
+#initParBtn.par-active {
+  background: #c62828 !important; /* red */
+  color: #fff !important;
+}
+
 
   /* MAIN LAYOUT */
   #board {
@@ -288,6 +301,32 @@
     z-index: 10;
     white-space: nowrap;
   }
+  .unit-tile .par-btn {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  border-radius: 4px;
+  border: 1px solid #000;
+  background: #fff;
+  cursor: pointer;
+  display: none; /* hidden unless PAR is active */
+}
+.unit-tile .par-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+/* PAR pending: bold bright red outline */
+.unit-tile.par-pending {
+  box-shadow: 0 0 0 3px #ff1744;
+}
+/* PAR complete: thick green outline */
+.unit-tile.par-complete {
+  box-shadow: 0 0 0 3px #00e676; /* bright green */
+}
+
+
 
   .unit-tile.engine { background: #ff8a80; }
   .unit-tile.tower  { background: #82b1ff; }
@@ -299,6 +338,24 @@
   .unit-tile.selected {
     outline: 2px solid #000;
   }
+.unit-tile.selected {
+  outline: none;
+  box-shadow: inset 0 0 0 2px #000;  /* inner black selection */
+}
+
+/* Selected + PAR-complete: show both */
+.unit-tile.par-complete.selected {
+  box-shadow:
+    0 0 0 3px #00e676,      /* outer green PAR complete */
+    inset 0 0 0 2px #000;   /* inner black selection */
+}
+
+/* Selected + PAR-pending: show both */
+.unit-tile.par-pending.selected {
+  box-shadow:
+    0 0 0 3px #ff1744,      /* outer red PAR pending */
+    inset 0 0 0 2px #000;   /* inner black selection */
+}
 
   .unit-tile[data-note]::after {
     content: "📝";
@@ -339,6 +396,28 @@
     margin-left: 8px;
     white-space: nowrap;
   }
+  /* PAR status dot on tiles */
+.unit-tile::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent; /* default: no status */
+}
+
+/* Pending PAR = yellow */
+.unit-tile[data-par-status="pending"]::before {
+  background: #ffeb3b;
+}
+
+/* PAR complete = green */
+.unit-tile[data-par-status="complete"]::before {
+  background: #4caf50;
+}
+
 
   .note-item {
     font-size: 14px;
@@ -440,6 +519,41 @@
     background: #4a148c;
     color: #fff;
   }
+  #notesTabPanel {
+  display: none;
+  width: 100%;
+  max-width: 900px;
+  margin: 10px auto;
+  background: #1e1e1e;
+  color: #f5f5f5;
+  border-radius: 6px;
+  padding: 10px 12px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.6);
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+/* Each note block inside Notes tab */
+.notes-tab-item {
+  border-bottom: 1px solid #444;
+  padding: 6px 4px;
+}
+
+.notes-tab-item:last-child {
+  border-bottom: none;
+}
+
+.notes-tab-item .notes-tab-header {
+  font-weight: bold;
+  margin-bottom: 2px;
+  color: #ffeb3b; /* tab name + label */
+}
+
+.notes-tab-item .notes-tab-body {
+  color: #f5f5f5;
+}
+
   </style>
 
 
@@ -461,14 +575,15 @@
     <div class="spacer"></div>
 
     <button id="btnAutoStack" title="Auto Organize">Organize Units</button>
+    <button id="initParBtn">Initiate PAR</button>
+
+    <div class="spacer"></div>
+
     <button id="btnModePen" title="Draw Lines">Draw</button>
     <button id="btnModeErase" title="Erase Drawing">Erase</button>
     <button id="btnModeCheck" title="Place Checkmarks">Check</button>
     <button id="btnText">Text</button>
-
-    <div class="spacer"></div>
-
-    <button id="btnDelete" title="Delete Selected">Del</button>
+    <button id="btnDelete" title="Delete Selected">Delete Tile</button>
     <button id="btnUndo">Undo</button>
     <button id="btnRedo">Redo</button>
     <button id="btnSaveLayout">Save</button>
@@ -533,6 +648,7 @@
           <img id="worksheetImage" src="plain worksheet.png" alt="Worksheet" />
           <canvas id="drawCanvas"></canvas>
         </div>
+        <div id="notesTabPanel" style="display:none;"></div>
       </div>
     </div>
   </div>
@@ -818,10 +934,21 @@ const DEFAULT_LAYOUT = {
       "history": [],
       "historyIndex": -1,
       "canvasDataURL": null
+    },
+    {
+      "id": 9999,
+      "name": "Notes",
+      "bgImage": "blank worksheet.png",
+      "tiles": [],
+      "history": [],
+      "historyIndex": -1,
+      "canvasDataURL": null,
+      "isNotesTab": true
     }
   ],
   "currentTabId": 1
 };
+
 
 
 const GRID = 10;
@@ -902,6 +1029,27 @@ function renderTabBar() {
 
     tabBar.insertBefore(btn, btnAddTab);
   });
+  // After creating normal tab buttons...
+const notesTabBtn = document.createElement("div");
+notesTabBtn.className = "tab notes-tab";
+notesTabBtn.textContent = "Notes";
+
+notesTabBtn.onclick = () => {
+  // Make sure the current tab's notes are saved into tabs[]
+  saveCurrentTabToMemory();
+
+  // Visually mark this as active in the tab bar
+  document.querySelectorAll("#tabBar .tab").forEach(t => {
+    t.classList.remove("active");
+  });
+  notesTabBtn.classList.add("active");
+
+  // Show the combined notes view
+  showGlobalNotes();
+};
+
+tabBar.appendChild(notesTabBtn);
+
 }
 
 function switchTab(newId) {
@@ -967,9 +1115,37 @@ function loadTabFromMemory(id) {
   const tab = tabs.find(t => t.id === id);
   if (!tab) return;
 
+  const notesPanel = document.getElementById("notesTabPanel");
+
+  // NOTES TAB SPECIAL CASE
+  if (tab.isNotesTab) {
+    // Hide map/canvas
+    mapWrapper.style.display = "none";
+
+    // Clear any stray tiles from previous tab view
+    [...mapWrapper.querySelectorAll(".unit-tile")].forEach(t => t.remove());
+    ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+
+    // Show global notes in big panel
+    if (notesPanel) {
+      notesPanel.style.display = "block";
+      showGlobalNotesInNotesTab();  // we'll define this next
+    }
+
+    // We still want floating notes hidden in this view
+    floatingNotes.style.display = "none";
+    return;
+  }
+
+  // NORMAL TABS
+  if (notesPanel) {
+    notesPanel.style.display = "none";
+  }
+  mapWrapper.style.display = "inline-block";
+
   [...mapWrapper.querySelectorAll(".unit-tile")].forEach(t => t.remove());
   ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-  
+
   worksheetImage.src = tab.bgImage;
 
   tab.tiles.forEach(d => {
@@ -993,9 +1169,10 @@ function loadTabFromMemory(id) {
 
   history = [...tab.history];
   historyIndex = tab.historyIndex;
-  
+
   refreshNotesList();
 }
+
 
 btnAddTab.onclick = () => {
   const name = prompt("Enter Name for new Tab:", "Sheet " + (tabs.length + 1));
@@ -1039,6 +1216,126 @@ bgUploadInput.onchange = e => {
   reader.readAsDataURL(file);
   e.target.value = "";
 };
+
+
+/* ===== PAR SYSTEM (red border + double-click) ===== */
+
+let parModeActive = false;
+let parCycleId = 0;
+let parLogEntries = []; // stores PAR log lines
+
+// Format time like 14:32
+function formatParTime(date = new Date()) {
+  const h = String(date.getHours()).padStart(2, "0");
+  const m = String(date.getMinutes()).padStart(2, "0");
+  return `${h}:${m}`;
+}
+
+// Record PAR notes in the floating Notes window
+function logParNote(text) {
+  parLogEntries.push(text);
+
+  const item = document.createElement("div");
+  item.className = "note-item par-log";
+  item.textContent = text;
+  notesList.appendChild(item);
+
+  if (floatingNotes) {
+    floatingNotes.style.display = "block";
+  }
+
+  console.log("[PAR]", text);
+}
+
+// Start a new PAR round
+function initiateParCycle() {
+  if (parModeActive) return;
+
+  parModeActive = true;
+  parCycleId++;
+
+  const time = formatParTime();
+  logParNote(`PAR initiated – ${time}`);
+
+  const tiles = document.querySelectorAll(".unit-tile");
+  tiles.forEach(tile => {
+    const type = tile.dataset.type || "";
+
+    if (type.toLowerCase() === "text" || tile.classList.contains("texttile")) {
+      return;
+    }
+
+    tile.classList.add("par-pending");
+  });
+
+  const parBtn = document.getElementById("initParBtn");
+  if (parBtn) {
+    parBtn.textContent = "End PAR";
+    parBtn.classList.add("par-active");   // ✅ THIS IS THE EXACT LINE
+  }
+}
+
+
+// End the PAR round and clear red boxes
+function endParCycle() {
+  if (!parModeActive) return;
+
+  parModeActive = false;
+
+  // Remove red borders
+  const pendingTiles = document.querySelectorAll(".unit-tile.par-pending");
+  pendingTiles.forEach(tile => tile.classList.remove("par-pending"));
+
+  // Remove green borders
+  const completedTiles = document.querySelectorAll(".unit-tile.par-complete");
+  completedTiles.forEach(tile => tile.classList.remove("par-complete"));
+
+  const time = formatParTime();
+  logParNote(`PAR complete – ${time}`);
+
+const parBtn = document.getElementById("initParBtn");
+if (parBtn) {
+    parBtn.textContent = "Initiate PAR";
+    parBtn.classList.remove("par-active");  // remove when PAR ends
+}
+
+}
+
+
+// Toggle PAR on/off with a single button
+const parToggleBtn = document.getElementById("initParBtn");
+if (parToggleBtn) {
+  parToggleBtn.addEventListener("click", () => {
+    if (parModeActive) {
+      endParCycle();
+    } else {
+      initiateParCycle();
+    }
+  });
+}
+
+// Handle double-click on tiles
+function handleTileDoubleClick(e) {
+  const tile = e.currentTarget;
+  const type = tile.dataset.type || "";
+  const isTextTile =
+    type.toLowerCase() === "text" || tile.classList.contains("texttile");
+
+  // If we're in PAR mode and this unit is pending, treat double-click as PAR
+  if (parModeActive && tile.classList.contains("par-pending") && !isTextTile) {
+    const labelFromData = tile.dataset.label || tile.dataset.unit || "";
+    const unitLabel = labelFromData || tile.textContent.trim();
+    const time = formatParTime();
+
+    // Record note
+    logParNote(`PAR – ${unitLabel} – ${time}`);
+
+    // Transition from red → green
+    tile.classList.remove("par-pending");
+    tile.classList.add("par-complete");
+}
+
+}
 
 /* Undo/Redo (tiles) */
 let history = [];
@@ -1183,18 +1480,170 @@ function select(el) {
   selected = el;
   selected.classList.add("selected");
 }
+function showGlobalNotesInNotesTab() {
+  const notesPanel = document.getElementById("notesTabPanel");
+  if (!notesPanel) return;
 
-/* Notes list */
-function refreshNotesList() {
-  notesList.innerHTML = "";
-  const tiles = [...mapWrapper.querySelectorAll(".unit-tile")];
+  notesPanel.innerHTML = "";
   let noteCount = 0;
 
+  // Gather notes from each tab's stored tiles
+  tabs.forEach(tab => {
+    if (!tab.tiles || tab.tiles.length === 0) return;
+
+    tab.tiles.forEach(tileData => {
+      if (!tileData.note) return;
+
+      noteCount++;
+
+      const item = document.createElement("div");
+      item.className = "notes-tab-item";
+
+      const header = document.createElement("div");
+      header.className = "notes-tab-header";
+      header.textContent = `[${tab.name}] ${tileData.label}`;
+
+      const body = document.createElement("div");
+      body.className = "notes-tab-body";
+      body.textContent = tileData.note;
+
+      item.appendChild(header);
+      item.appendChild(body);
+
+      // Click to jump back to that tab & tile
+      item.onclick = () => {
+        currentTabId = tab.id;
+        renderTabBar();
+        loadTabFromMemory(tab.id);
+
+        // Try to find and scroll to the tile
+        const candidates = [...mapWrapper.querySelectorAll(".unit-tile")];
+        const match = candidates.find(t => t.textContent.trim() === tileData.label);
+        if (match) {
+          setMode("move");
+          select(match);
+          match.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "center"
+          });
+        }
+      };
+
+      notesPanel.appendChild(item);
+    });
+  });
+
+  // Include PAR log entries, if any
+  if (typeof parLogEntries !== "undefined" && Array.isArray(parLogEntries)) {
+    parLogEntries.forEach(text => {
+      noteCount++;
+      const item = document.createElement("div");
+      item.className = "notes-tab-item";
+      const header = document.createElement("div");
+      header.className = "notes-tab-header";
+      header.textContent = "[PAR Log]";
+
+      const body = document.createElement("div");
+      body.className = "notes-tab-body";
+      body.textContent = text;
+
+      item.appendChild(header);
+      item.appendChild(body);
+      notesPanel.appendChild(item);
+    });
+  }
+
+  if (!noteCount) {
+    const empty = document.createElement("div");
+    empty.style.padding = "8px 4px";
+    empty.textContent = "No notes recorded yet.";
+    notesPanel.appendChild(empty);
+  }
+}
+
+function refreshNotesList() {
+  notesList.innerHTML = "";
+  let tileNoteCount = 0;
+
+  function showGlobalNotes() {
+  notesList.innerHTML = "";
+  let noteCount = 0;
+
+  // Gather notes from each tab's stored tiles
+  tabs.forEach(tab => {
+    if (!tab.tiles || tab.tiles.length === 0) return;
+
+    tab.tiles.forEach(tileData => {
+      if (!tileData.note) return;
+
+      noteCount++;
+
+      const item = document.createElement("div");
+      item.className = "note-item";
+
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "note-label";
+      // [TabName] UnitLabel:
+      labelSpan.textContent = `[${tab.name}] ${tileData.label}:`;
+
+      const noteSpan = document.createElement("span");
+      noteSpan.className = "note-text";
+      noteSpan.textContent = " " + tileData.note;
+
+      item.appendChild(labelSpan);
+      item.appendChild(noteSpan);
+
+      // Optional: click to jump to that tab + unit
+      item.onclick = () => {
+        // Switch to that tab, scroll to that unit tile if present
+        loadTabFromMemory(tab.id);
+        currentTabId = tab.id;
+        renderTabBar();
+
+        // Try to find the matching tile on the board
+        const candidates = [...mapWrapper.querySelectorAll(".unit-tile")];
+        const match = candidates.find(t => t.textContent.trim() === tileData.label);
+        if (match) {
+          setMode("move");
+          select(match);
+          match.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "center"
+          });
+        }
+      };
+
+      notesList.appendChild(item);
+    });
+  });
+
+  // Optional: include PAR log entries if you're using parLogEntries[]
+  if (typeof parLogEntries !== "undefined" && Array.isArray(parLogEntries)) {
+    parLogEntries.forEach(text => {
+      const item = document.createElement("div");
+      item.className = "note-item par-log";
+      item.textContent = text;
+      notesList.appendChild(item);
+      noteCount++;
+    });
+  }
+
+  const notesBox = document.getElementById("floatingNotes");
+  if (notesBox) {
+    notesBox.style.display = noteCount > 0 ? "block" : "none";
+  }
+}
+
+
+  // Tile-based notes (per-unit notes using dataset.note)
+  const tiles = [...mapWrapper.querySelectorAll(".unit-tile")];
   tiles.forEach(tile => {
     const note = tile.dataset.note;
     if (!note) return;
 
-    noteCount++;
+    tileNoteCount++;
 
     const item = document.createElement("div");
     item.className = "note-item";
@@ -1235,11 +1684,22 @@ function refreshNotesList() {
     notesList.appendChild(item);
   });
 
+  // Append PAR log entries (from PAR rounds)
+  parLogEntries.forEach(text => {
+    const item = document.createElement("div");
+    item.className = "note-item par-log";
+    item.textContent = text;
+    notesList.appendChild(item);
+  });
+
   const notesBox = document.getElementById("floatingNotes");
   if (notesBox) {
-    notesBox.style.display = noteCount > 0 ? "block" : "none";
+    const hasAny = tileNoteCount > 0 || parLogEntries.length > 0;
+    notesBox.style.display = hasAny ? "block" : "none";
   }
 }
+
+
 
 /* Layout Save / Load */
 function getCurrentLayout() {
@@ -1381,7 +1841,7 @@ function createTileElement(type, cssClass, text) {
 
   tile.addEventListener("mousedown", startTileDragMouse);
   tile.addEventListener("touchstart", startTileDragTouch, { passive: false });
-  tile.ondblclick = duplicateTileMouse;
+  tile.ondblclick = handleTileDoubleClick;
 
   return tile;
 }
@@ -1911,7 +2371,7 @@ saveState();
 </script>
 
 <div style="position:absolute; bottom:4px; right:8px; font-size:10px; color:#bbb;">
-  Created by DC Daniel Romano (OFD)
+  Digital Tactical Worksheet v1.0 Created by Daniel Romano
 </div>
 
 <script>
@@ -1927,10 +2387,5 @@ saveState();
 
 </body>
 </html>
-
-
-
-
-
 
 
