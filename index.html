@@ -2153,9 +2153,10 @@ function startTileDragTouch(e) {
   const r = tile.getBoundingClientRect();
   const ws = mapWrapper.getBoundingClientRect();
 
-  let x = (touch.clientX - ws.left - dragOffsetX) / zoomLevel;
-let y = (touch.clientY - ws.top  - dragOffsetY) / zoomLevel;
+  dragOffsetX = touch.clientX - r.left;
+  dragOffsetY = touch.clientY - r.top;
 
+  draggingTile = tile;
 
   clearTimeout(longPressTimeout);
   longPressTimeout = setTimeout(() => {
@@ -2169,59 +2170,24 @@ let y = (touch.clientY - ws.top  - dragOffsetY) / zoomLevel;
   document.addEventListener("touchend", stopTileDragTouch);
   e.preventDefault();
 }
-function getCanvasCoordsFromMouseEvent(e) {
-  const rect = drawCanvas.getBoundingClientRect();
-  const scaleX = rect.width / drawCanvas.width || 1;
-  const scaleY = rect.height / drawCanvas.height || 1;
-
-  const x = (e.clientX - rect.left) / scaleX;
-  const y = (e.clientY - rect.top) / scaleY;
-  return { x, y };
-}
-
-function getCanvasCoordsFromTouchEvent(e) {
-  const t = e.touches[0];
-  const rect = drawCanvas.getBoundingClientRect();
-  const scaleX = rect.width / drawCanvas.width || 1;
-  const scaleY = rect.height / drawCanvas.height || 1;
-
-  const x = (t.clientX - rect.left) / scaleX;
-  const y = (t.clientY - rect.top) / scaleY;
-  return { x, y };
-}
-
-function startTileDragTouch(e) {
-  const tile = e.currentTarget;
-
-  if (mode === "note") {
-    openNotePrompt(tile);
-    e.preventDefault();
-    return;
-  }
-
-  if (mode !== "move") setMode("move");
-  if (mode !== "move") return;
-
-  select(tile);
-  touchMoved = false;
+function tileDragTouch(e) {
+  if (!draggingTile) return;
+  touchMoved = true;
 
   const touch = e.touches[0];
-  const r  = tile.getBoundingClientRect();
   const ws = mapWrapper.getBoundingClientRect();
 
-  // FIX: set drag offsets for accurate movement
-  dragOffsetX = touch.clientX - r.left;
-  dragOffsetY = touch.clientY - r.top;
+  let x = touch.clientX - ws.left - dragOffsetX;
+  let y = touch.clientY - ws.top  - dragOffsetY;
 
-  // FIX: tile actually enters drag mode
-  draggingTile = tile;
+  x = Math.round(x / GRID) * GRID;
+  y = Math.round(y / GRID) * GRID;
 
-   document.addEventListener("touchmove", tileDragTouch, { passive: false });
-  document.addEventListener("touchend", stopTileDragTouch, { passive: false });
+  draggingTile.style.left = x + "px";
+  draggingTile.style.top  = y + "px";
 
   e.preventDefault();
 }
-
 function stopTileDragTouch(e) {
   clearTimeout(longPressTimeout);
 
@@ -2597,6 +2563,7 @@ saveState();
 
 </body>
 </html>
+
 
 
 
