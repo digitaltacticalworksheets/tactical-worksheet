@@ -1168,17 +1168,31 @@ let isPinching = false;
 let initialPinchDistance = 0;
 let initialZoomLevel = 1;
 
+// Panning state (mouse + touch)
+let isPanning = false;
+let panStartX = 0, panStartY = 0;
+let panScrollLeft = 0, panScrollTop = 0;
+
+let isTouchPanning = false;
+let touchPanStartX = 0, touchPanStartY = 0;
+let touchPanScrollLeft = 0, touchPanScrollTop = 0;
+
+
 function getTouchDistance(t1, t2) {
   const dx = t2.clientX - t1.clientX;
   const dy = t2.clientY - t1.clientY;
   return Math.hypot(dx, dy);
 }
+
 function handleWorksheetTouchStart(e) {
-  // Don't pinch-zoom while drawing/checking
+  // Don't pinch/pan while drawing/checking
   if (mode === "pen" || mode === "erase" || mode === "check") return;
 
+  // --- Two-finger pinch zoom ---
   if (e.touches.length === 2) {
     isPinching = true;
+    isTouchPanning = false;
+
     initialPinchDistance = getTouchDistance(e.touches[0], e.touches[1]);
     initialZoomLevel = zoomLevel;
 
@@ -1187,20 +1201,52 @@ function handleWorksheetTouchStart(e) {
     clearTimeout(longPressTimeout);
 
     e.preventDefault();
+    return;
+  }
+
+  // --- One-finger pan (only when zoomed in) ---
+  if (e.touches.length === 1 && zoomLevel > 1) {
+    const target = e.target;
+
+    // If we started on a tile or the floating notes, let their own handlers run
+    if (target.closest(".unit-tile") || target.closest("#floatingNotes")) return;
+
+    const t = e.touches[0];
+    isTouchPanning = true;
+    isPinching = false;
+
+    touchPanStartX = t.clientX;
+    touchPanStartY = t.clientY;
+    touchPanScrollLeft = worksheet.scrollLeft;
+    touchPanScrollTop = worksheet.scrollTop;
+
+    e.preventDefault();
   }
 }
 
 function handleWorksheetTouchMove(e) {
-  if (!isPinching) return;
-  if (e.touches.length !== 2) return;
+  // --- Pinch zoom (2 fingers) ---
+  if (isPinching && e.touches.length === 2) {
+    const dist = getTouchDistance(e.touches[0], e.touches[1]);
+    if (initialPinchDistance > 0) {
+      const scaleFactor = dist / initialPinchDistance;
+      applyZoom(initialZoomLevel * scaleFactor);
+    }
+    e.preventDefault();
+    return;
+  }
 
-  const dist = getTouchDistance(e.touches[0], e.touches[1]);
-  if (initialPinchDistance <= 0) return;
+  // --- One-finger pan (when zoomed) ---
+  if (isTouchPanning && e.touches.length === 1 && zoomLevel > 1) {
+    const t = e.touches[0];
+    const dx = t.clientX - touchPanStartX;
+    const dy = t.clientY - touchPanStartY;
 
-  const scaleFactor = dist / initialPinchDistance;
-  applyZoom(initialZoomLevel * scaleFactor);
+    worksheet.scrollLeft = touchPanScrollLeft - dx;
+    worksheet.scrollTop  = touchPanScrollTop  - dy;
 
-  e.preventDefault();
+    e.preventDefault();
+  }
 }
 
 function handleWorksheetTouchEnd(e) {
@@ -1208,6 +1254,11 @@ function handleWorksheetTouchEnd(e) {
   if (e.touches.length < 2) {
     isPinching = false;
     initialPinchDistance = 0;
+  }
+
+  // If no touches left, stop panning too
+  if (e.touches.length === 0) {
+    isTouchPanning = false;
   }
 }
 
@@ -1220,6 +1271,50 @@ worksheet.addEventListener("touchcancel",handleWorksheetTouchEnd);
 
 // Initialize zoom once
 applyZoom(1);
+
+function handleWorksheetMouseDown(e) {
+  // Only left-click
+  if (e.button !== 0) return;
+
+  // Don't pan while drawing/checking
+  if (mode === "pen" || mode === "erase" || mode === "check") return;
+
+  // Don't start panning from tiles or floating notes
+  if (e.target.closest(".unit-tile") || e.target.closest("#floatingNotes")) return;
+
+  // Only really useful when zoomed in
+  if (zoomLevel <= 1) return;
+
+  isPanning = true;
+  panStartX = e.clientX;
+  panStartY = e.clientY;
+  panScrollLeft = worksheet.scrollLeft;
+  panScrollTop  = worksheet.scrollTop;
+
+  worksheet.style.cursor = "grabbing";
+  e.preventDefault();
+}
+
+function handleWorksheetMouseMove(e) {
+  if (!isPanning) return;
+
+  const dx = e.clientX - panStartX;
+  const dy = e.clientY - panStartY;
+
+  worksheet.scrollLeft = panScrollLeft - dx;
+  worksheet.scrollTop  = panScrollTop  - dy;
+}
+
+function handleWorksheetMouseUp() {
+  if (!isPanning) return;
+  isPanning = false;
+  worksheet.style.cursor = "";
+}
+
+worksheet.addEventListener("mousedown", handleWorksheetMouseDown);
+document.addEventListener("mousemove", handleWorksheetMouseMove);
+document.addEventListener("mouseup", handleWorksheetMouseUp);
+
 
 
 
