@@ -78,6 +78,45 @@
     background: #607d8b;
     color: #fff; font-weight: bold;
   }
+  /* Toolbar dropdown (More ▾) */
+.toolbar-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.toolbar-dropdown .dropdown-toggle {
+  background: #444;
+  color: #fff;
+  font-weight: bold;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #333;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 4px;
+  display: none;
+  flex-direction: column;
+  z-index: 10000;
+  min-width: 160px;
+}
+
+.dropdown-menu.open {
+  display: flex;
+}
+
+.dropdown-menu button {
+  width: 100%;
+  justify-content: flex-start;
+  margin: 2px 0;
+  font-size: 13px;
+  height: 28px;
+}
+
 
   #toolbar button:hover {
     filter: brightness(1.1);
@@ -342,7 +381,6 @@
   outline: none;
   box-shadow: inset 0 0 0 2px #000;  /* inner black selection */
 }
-
 /* Selected + PAR-complete: show both */
 .unit-tile.par-complete.selected {
   box-shadow:
@@ -554,6 +592,87 @@
   color: #f5f5f5;
 }
 
+#zoomSlider {
+  width: 120px;
+  accent-color: #0277bd;
+  margin: 0 4px;
+  cursor: pointer;
+}
+.tab-dropdown {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+}
+
+.tab-dropdown .dropdown-toggle {
+  background: #444;
+  color: #fff;
+  font-size: 13px;
+  border-radius: 0;
+  height: 100%;
+}
+/* Temporarily hide the "New Worksheet" dropdown */
+#tabTemplateDropdown {
+  display: none;
+}
+#worksheet {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+#mapWrapper {
+  transform-origin: center center;
+  margin: auto;
+}
+#mapWrapper {
+  transition: transform 0.15s ease-out;
+}
+#zoomControls {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+
+  background: rgba(252, 245, 245, 0);
+  backdrop-filter: clear(6px);
+  padding: 6px 10px;
+  border-radius: 8px;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+#zoomControls button {
+  height: 15px;
+  width: 15px;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+}
+
+#zoomControls input[type="range"] {
+  width: 80px;
+}
+#notesTabPanel {
+  display: none;
+  padding: 10px;
+  overflow-y: auto;
+  background: #111;
+  color: #fff;
+  height: calc(100vh - 120px); /* adjust for toolbar & tabs */
+}
+
+
+
+
+
   </style>
 
 
@@ -571,10 +690,11 @@
     <button id="btnChief">Chief</button>
     <button id="btnRIT">RIT</button>
     <button id="btnOther">Other</button>
+    <button id="btnText">Text</button>
 
     <div class="spacer"></div>
 
-    <button id="btnAutoStack" title="Auto Organize">Sort Units</button>
+    <button id="btnAutoStack" title="Auto Organize">Stack Units</button>
     <button id="initParBtn">PAR</button>
 
     <div class="spacer"></div>
@@ -582,17 +702,32 @@
     <button id="btnModePen" title="Draw Lines">Draw</button>
     <button id="btnModeErase" title="Erase Drawing">Erase</button>
     <button id="btnModeCheck" title="Place Checkmarks">Chk</button>
-    <button id="btnText">Text</button>
-    <button id="btnDelete" title="Delete Selected">Delete</button>
+    <button id="btnDelete" title="Delete Selected TIle">Delete</button>
     <button id="btnUndo">Undo</button>
     <button id="btnRedo">Redo</button>
-    <button id="btnSaveLayout">Save</button>
-    <button id="btnLoadLayout">Load</button>
-    <button id="btnChangeBg" title="Upload Image/Map">Upload Worksheet</button>
-    <button id="btnFullscreen">Fullscreen</button>
-    <button id="btnHelp">Help</button>
+
+    <!-- Dropdown for Save/Load/Upload/Help -->
+    <div id="moreDropdown" class="toolbar-dropdown">
+      <button id="btnMoreActions" class="dropdown-toggle">More ▾</button>
+      <div id="moreMenu" class="dropdown-menu">
+        <button id="btnSaveLayout">Save Layout</button>
+        <button id="btnLoadLayout">Load Layout</button>
+        <button id="btnChangeBg" title="Upload Image/Map">Upload Worksheet</button>
+        <button id="btnHelp">Help / Manual</button>
+      </div>
+    </div>
+    <!-- Zoom controls -->
+<div id="zoomControls">
+  <button id="btnZoomOut" title="Zoom Out">-</button>
+  <input id="zoomSlider" type="range" min="50" max="175" value="100" />
+  <button id="btnZoomIn" title="Zoom In">+</button>
+</div>
+
+
+<button id="btnFullscreen">Fullscreen</button>
 
     <span id="modeLabel" class="mode-indicator">Mode: Move/Select</span>
+
   </div>
 
   <div id="board">
@@ -638,28 +773,56 @@
       </div>
     </div>
 
-    <div id="workspaceContainer">
-      <div id="tabBar">
-        <button id="btnAddTab">+</button>
-      </div>
+<div id="workspaceContainer">
 
-      <div id="worksheet">
-        <div id="mapWrapper">
-          <img id="worksheetImage" src="plain worksheet.png" alt="Worksheet" />
-          <canvas id="drawCanvas"></canvas>
-        </div>
-        <div id="notesTabPanel" style="display:none;"></div>
-      </div>
+  <!-- Tab bar (single instance) -->
+  <div id="tabBar">
+    <!-- tabs are injected here before this button -->
+    <button id="btnAddTab">+</button>
+    ...
+  </div>
+
+  <!-- Worksheet area (RESTORED) -->
+  <div id="worksheet">
+    <div id="mapWrapper">
+      <img
+        id="worksheetImage"
+        src="plain worksheet.png"
+        alt="Worksheet"
+      />
+      <canvas id="drawCanvas"></canvas>
     </div>
   </div>
 
-  <div id="floatingNotes">
-    <div id="floatingNotesHeader">Notes</div>
-    <div id="floatingNotesContent"></div>
-  </div>
+  <!-- 🔹 Notes Tab panel (GLOBAL NOTES + PAR LOG) -->
+  <div id="notesTabPanel"></div>
 
-  <input type="file" id="loadFileInput" accept="application/json" style="display:none" />
-  <input type="file" id="bgUploadInput" accept="image/png, image/jpeg, image/jpg, image/gif, image/webp" style="display:none" />
+</div> <!-- end #workspaceContainer -->
+
+
+<!-- Floating Notes window (keep outside container or just after it) -->
+<div id="floatingNotes">
+  <div id="floatingNotesHeader">Notes</div>
+  <div id="floatingNotesContent"></div>
+</div>
+
+<input
+  type="file"
+  id="loadFileInput"
+  accept="application/json"
+  style="display:none"
+/>
+<input
+  type="file"
+  id="bgUploadInput"
+  accept="image/png, image/jpeg, image/jpg, image/gif, image/webp"
+  style="display:none"
+/>
+
+<script>
+  // existing JS...
+</script>
+
 <script>
 /* ===== DOM references ===== */
 const worksheet      = document.getElementById("worksheet");
@@ -683,6 +846,56 @@ const btnCollapseAll      = document.getElementById("btnCollapseAll");
 const btnExpandAll        = document.getElementById("btnExpandAll");
 const btnToggleSidebar    = document.getElementById("btnToggleSidebar");
 const sidebar             = document.getElementById("sidebar");
+const btnZoomIn   = document.getElementById("btnZoomIn");
+const btnZoomOut  = document.getElementById("btnZoomOut");
+const tabTemplateDropdown = document.getElementById("tabTemplateDropdown");
+const btnNewWorksheet     = document.getElementById("btnNewWorksheet");
+const templateMenu        = document.getElementById("templateMenu");
+
+const zoomSlider  = document.getElementById("zoomSlider");
+
+let zoomLevel = 1;           // 1.0 = 100%
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 1.75;
+
+const moreDropdown   = document.getElementById("moreDropdown");
+const btnMoreActions = document.getElementById("btnMoreActions");
+const moreMenu       = document.getElementById("moreMenu");
+
+if (btnMoreActions && moreMenu && moreDropdown) {
+  btnMoreActions.addEventListener("click", (e) => {
+    e.stopPropagation();
+    moreMenu.classList.toggle("open");
+  });
+}
+
+// New worksheet template dropdown
+if (btnNewWorksheet && templateMenu && tabTemplateDropdown) {
+  btnNewWorksheet.addEventListener("click", (e) => {
+    e.stopPropagation();
+    templateMenu.classList.toggle("open");
+  });
+
+  templateMenu.querySelectorAll("button[data-template]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.template;
+      createTabFromTemplate(key);
+      templateMenu.classList.remove("open");
+    });
+  });
+}
+
+// Global click: close both dropdowns
+document.addEventListener("click", (e) => {
+  if (moreDropdown && !moreDropdown.contains(e.target)) {
+    moreMenu.classList.remove("open");
+  }
+  if (tabTemplateDropdown && !tabTemplateDropdown.contains(e.target)) {
+    templateMenu.classList.remove("open");
+  }
+});
+
 
 /* Tab Elements */
 const tabBar    = document.getElementById("tabBar");
@@ -851,6 +1064,110 @@ function renderTabBar() {
     tabBar.insertBefore(btn, btnAddTab);
   });
 }
+function cloneTabTemplateByName(name) {
+  if (!DEFAULT_LAYOUT || !Array.isArray(DEFAULT_LAYOUT.tabs)) return null;
+  const base = DEFAULT_LAYOUT.tabs.find(t => t.name === name);
+  if (!base) return null;
+
+  // Deep clone
+  const copy = JSON.parse(JSON.stringify(base));
+  delete copy.id;
+  delete copy.isNotesTab;
+  copy.history = [];
+  copy.historyIndex = -1;
+  copy.canvasDataURL = null;
+
+  return copy;
+}
+
+function createTabFromTemplate(templateKey) {
+  let templateName;
+  let defaultName;
+  let defaultBg = "plain worksheet.png";
+
+  switch (templateKey) {
+    case "main":
+      templateName = "Main Board";
+      defaultName = "Main Board";
+      defaultBg = "plain worksheet.png";
+      break;
+    case "benchmarks":
+      templateName = "Benchmarks";
+      defaultName = "Benchmarks";
+      defaultBg = "blank worksheet.png";
+      break;
+    case "tactical":
+      templateName = "Tactical Worksheet";
+      defaultName = "Tactical Worksheet";
+      defaultBg = "worksheet.png";
+      break;
+    case "blank":
+    default:
+      templateName = "Blank";
+      defaultName = "Blank";
+      defaultBg = "blank worksheet.png";
+      break;
+  }
+
+  const baseClone = cloneTabTemplateByName(templateName);
+  const newId = Date.now();
+
+  const newTab = baseClone || {
+    name: defaultName,
+    bgImage: defaultBg,
+    tiles: [],
+    history: [],
+    historyIndex: -1,
+    canvasDataURL: null
+  };
+
+  newTab.id = newId;
+
+  saveCurrentTabToMemory();
+  tabs.push(newTab);
+  currentTabId = newTab.id;
+  loadTabFromMemory(newTab.id);
+  renderTabBar();
+}
+
+/*Zoom */
+function applyZoom(level) {
+  zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, level));
+  zoomSlider.value = Math.round(zoomLevel * 100);
+
+  // Scale to center
+  mapWrapper.style.transform = `scale(${zoomLevel})`;
+  mapWrapper.style.transformOrigin = "center center";
+
+  // Re-center inside the worksheet container
+  mapWrapper.style.margin = "auto";
+}
+
+if (zoomSlider) {
+  zoomSlider.addEventListener("input", () => {
+    const val = parseInt(zoomSlider.value, 10) || 100;
+    applyZoom(val / 100);
+  });
+}
+
+if (btnZoomIn) {
+  btnZoomIn.addEventListener("click", () => {
+    const current = zoomLevel;
+    applyZoom(current + 0.1);
+  });
+}
+
+if (btnZoomOut) {
+  btnZoomOut.addEventListener("click", () => {
+    const current = zoomLevel;
+    applyZoom(current - 0.1);
+  });
+}
+
+// Initialize zoom once
+applyZoom(1);
+
+
 
 function switchTab(newId) {
   if (newId === currentTabId) return;
@@ -874,15 +1191,29 @@ function renameTab(tabId) {
 }
 
 function deleteTab(id) {
+  // Find the tab first
+  const tab = tabs.find(t => t.id === id);
+  if (!tab) return;
+
+  // 🔒 Prevent deleting the Notes tab
+  if (tab.name && tab.name.toLowerCase() === "notes") {
+    alert("The Notes tab cannot be deleted.");
+    return;
+  }
+
+  // Don't allow deleting if it's the last remaining tab
   if (tabs.length <= 1) return;
+
   const confirmDelete = confirm("Are you sure you want to delete this tab?");
-  if(!confirmDelete) return;
+  if (!confirmDelete) return;
 
   const index = tabs.findIndex(t => t.id === id);
   if (index === -1) return;
 
+  // Remove tab from the array
   tabs.splice(index, 1);
 
+  // If we deleted the current tab, switch to a neighbor
   if (id === currentTabId) {
     const newIndex = Math.max(0, index - 1);
     currentTabId = tabs[newIndex].id;
@@ -891,6 +1222,7 @@ function deleteTab(id) {
 
   renderTabBar();
 }
+
 
 /* Save current tab's tiles (including PAR state) */
 function saveCurrentTabToMemory() {
@@ -1137,8 +1469,35 @@ function handleTileDoubleClick(e) {
 
   if (mode === "move") duplicateTileGeneric(tile);
 }
+function applyState(state) {
+  applyingState = true;
 
-/* Undo/Redo (tiles) */
+  // Remove existing tiles
+  [...mapWrapper.querySelectorAll(".unit-tile")].forEach(t => t.remove());
+
+  // Rebuild tiles from the saved state
+  (state || []).forEach(d => {
+    const tile = createTileElement(d.type, d.cssClass, d.label);
+    tile.style.left = d.left;
+    tile.style.top  = d.top;
+
+    if (d.note) {
+      tile.dataset.note = d.note;
+      tile.title        = d.note;
+    }
+
+    mapWrapper.appendChild(tile);
+  });
+
+  applyingState = false;
+
+  // Keep notes and tab model in sync
+  saveCurrentTabToMemory();
+  refreshNotesList();
+}
+
+
+/* Undo/Redo (tiles only) */
 let history = [];
 let historyIndex = -1;
 let applyingState = false;
@@ -1155,41 +1514,65 @@ function saveState() {
     label: t.textContent,
     note: t.dataset.note || ""
   }));
+
   history = history.slice(0, historyIndex + 1);
   history.push(state);
   historyIndex++;
   refreshNotesList();
 }
 
-function applyState(state) {
-  applyingState = true;
-  [...mapWrapper.querySelectorAll(".unit-tile")].forEach(t => t.remove());
-  state.forEach(d => {
-    const tile = createTileElement(d.type, d.cssClass, d.label);
-    tile.style.left = d.left;
-    tile.style.top  = d.top;
-    if (d.note) {
-      tile.dataset.note = d.note;
-      tile.title = d.note;
-    }
-    mapWrapper.appendChild(tile);
-  });
-  applyingState = false;
-  refreshNotesList();
+/* Drawing undo history (canvas only) */
+let drawHistory = [];
+
+function saveDrawState() {
+  try {
+    const imgData = ctx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
+    drawHistory.push(imgData);
+  } catch (e) {
+    console.warn("Could not save canvas state:", e);
+  }
 }
 
-document.getElementById("btnUndo").onclick = () => {
-  if (historyIndex > 0) {
-    historyIndex--;
-    applyState(history[historyIndex]);
-  }
-};
-document.getElementById("btnRedo").onclick = () => {
-  if (historyIndex < history.length - 1) {
-    historyIndex++;
-    applyState(history[historyIndex]);
-  }
-};
+// returns true if we actually undid a drawing action
+function undoDraw() {
+  if (drawHistory.length === 0) return false;
+
+  const imgData = drawHistory.pop();
+  ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  ctx.putImageData(imgData, 0, 0);
+  return true;
+}
+
+/* Tile undo/redo */
+function undo() {
+  if (historyIndex <= 0) return;
+  historyIndex--;
+  applyState(history[historyIndex]);
+}
+
+function redo() {
+  if (historyIndex >= history.length - 1) return;
+  historyIndex++;
+  applyState(history[historyIndex]);
+}
+
+/* Wire buttons: drawing undo first, then tiles */
+const btnUndo = document.getElementById("btnUndo");
+const btnRedo = document.getElementById("btnRedo");
+
+btnUndo.addEventListener("click", () => {
+  // 1) Try to undo drawing
+  if (undoDraw()) return;
+
+  // 2) If no drawing history, undo tiles
+  undo();
+});
+
+btnRedo.addEventListener("click", () => {
+  // (we only redo tiles for now)
+  redo();
+});
+
 
 /* Toggle Sidebar */
 btnToggleSidebar.onclick = () => {
@@ -1732,14 +2115,15 @@ function tileDragMouse(e) {
   mouseMovedDuringPress = true;
 
   const ws = mapWrapper.getBoundingClientRect();
-  let x = e.clientX - ws.left - dragOffsetX;
-  let y = e.clientY - ws.top  - dragOffsetY;
+ let x = (e.clientX - ws.left - dragOffsetX) / zoomLevel;
+let y = (e.clientY - ws.top  - dragOffsetY) / zoomLevel;
 
-  x = Math.round(x / GRID) * GRID;
-  y = Math.round(y / GRID) * GRID;
+x = Math.round(x / GRID) * GRID;
+y = Math.round(y / GRID) * GRID;
 
-  draggingTile.style.left = x + "px";
-  draggingTile.style.top  = y + "px";
+draggingTile.style.left = x + "px";
+draggingTile.style.top  = y + "px";
+
 }
 function stopTileDragMouse() {
   clearTimeout(longPressTimeout);
@@ -1769,10 +2153,9 @@ function startTileDragTouch(e) {
   const r = tile.getBoundingClientRect();
   const ws = mapWrapper.getBoundingClientRect();
 
-  dragOffsetX = touch.clientX - r.left;
-  dragOffsetY = touch.clientY - r.top;
+  let x = (touch.clientX - ws.left - dragOffsetX) / zoomLevel;
+let y = (touch.clientY - ws.top  - dragOffsetY) / zoomLevel;
 
-  draggingTile = tile;
 
   clearTimeout(longPressTimeout);
   longPressTimeout = setTimeout(() => {
@@ -1786,6 +2169,27 @@ function startTileDragTouch(e) {
   document.addEventListener("touchend", stopTileDragTouch);
   e.preventDefault();
 }
+function getCanvasCoordsFromMouseEvent(e) {
+  const rect = drawCanvas.getBoundingClientRect();
+  const scaleX = rect.width / drawCanvas.width || 1;
+  const scaleY = rect.height / drawCanvas.height || 1;
+
+  const x = (e.clientX - rect.left) / scaleX;
+  const y = (e.clientY - rect.top) / scaleY;
+  return { x, y };
+}
+
+function getCanvasCoordsFromTouchEvent(e) {
+  const t = e.touches[0];
+  const rect = drawCanvas.getBoundingClientRect();
+  const scaleX = rect.width / drawCanvas.width || 1;
+  const scaleY = rect.height / drawCanvas.height || 1;
+
+  const x = (t.clientX - rect.left) / scaleX;
+  const y = (t.clientY - rect.top) / scaleY;
+  return { x, y };
+}
+
 function tileDragTouch(e) {
   if (!draggingTile) return;
   touchMoved = true;
@@ -1876,29 +2280,31 @@ function drawCheckmark(x, y) {
   ctx.restore();
 }
 
+
 /* Drawing: mouse */
 drawCanvas.addEventListener("mousedown", e => {
-  const r = drawCanvas.getBoundingClientRect();
-  const x = e.clientX - r.left;
-  const y = e.clientY - r.top;
+  const { x, y } = getCanvasCoordsFromMouseEvent(e);
 
   if (mode === "check") {
+    saveDrawState();
     drawCheckmark(x, y);
     return;
   }
 
   if (mode !== "pen" && mode !== "erase") return;
+
+  saveDrawState();
   isDrawing = true;
   lastX = x;
   lastY = y;
 });
+
+
 drawCanvas.addEventListener("mousemove", e => {
   if (!isDrawing) return;
   if (mode !== "pen" && mode !== "erase") return;
 
-  const r = drawCanvas.getBoundingClientRect();
-  const x = e.clientX - r.left;
-  const y = e.clientY - r.top;
+  const { x, y } = getCanvasCoordsFromMouseEvent(e);
 
   if (mode === "pen") {
     ctx.globalCompositeOperation = "source-over";
@@ -1919,6 +2325,8 @@ drawCanvas.addEventListener("mousemove", e => {
   lastX = x;
   lastY = y;
 });
+
+
 drawCanvas.addEventListener("mouseup", () => {
   isDrawing = false;
   ctx.globalCompositeOperation = "source-over";
@@ -1928,25 +2336,55 @@ drawCanvas.addEventListener("mouseleave", () => {
   ctx.globalCompositeOperation = "source-over";
 });
 
+
 /* Drawing: touch */
 drawCanvas.addEventListener("touchstart", e => {
-  const t = e.touches[0];
-  const r = drawCanvas.getBoundingClientRect();
-  const x = t.clientX - r.left;
-  const y = t.clientY - r.top;
+  const { x, y } = getCanvasCoordsFromTouchEvent(e);
 
   if (mode === "check") {
     e.preventDefault();
+    saveDrawState();
     drawCheckmark(x, y);
     return;
   }
 
   if (mode !== "pen" && mode !== "erase") return;
   e.preventDefault();
+
+  saveDrawState();
   isDrawing = true;
   lastX = x;
   lastY = y;
 }, { passive: false });
+
+drawCanvas.addEventListener("touchmove", e => {
+  if (!isDrawing) return;
+  if (mode !== "pen" && mode !== "erase") return;
+  e.preventDefault();
+
+  const { x, y } = getCanvasCoordsFromTouchEvent(e);
+
+  if (mode === "pen") {
+    ctx.globalCompositeOperation = "source-over";
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "red";
+  } else if (mode === "erase") {
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.lineWidth = 20;
+    ctx.strokeStyle = "rgba(0,0,0,1)";
+  }
+
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+
+  lastX = x;
+  lastY = y;
+}, { passive: false });
+
+
 drawCanvas.addEventListener("touchmove", e => {
   if (!isDrawing) return;
   if (mode !== "pen" && mode !== "erase") return;
@@ -1976,6 +2414,7 @@ drawCanvas.addEventListener("touchmove", e => {
   lastX = x;
   lastY = y;
 }, { passive: false });
+
 drawCanvas.addEventListener("touchend", () => {
   isDrawing = false;
   ctx.globalCompositeOperation = "source-over";
@@ -1984,6 +2423,7 @@ drawCanvas.addEventListener("touchcancel", () => {
   isDrawing = false;
   ctx.globalCompositeOperation = "source-over";
 });
+
 
 /* Delete selected */
 document.getElementById("btnDelete").onclick = () => {
