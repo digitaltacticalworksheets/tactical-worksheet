@@ -294,17 +294,17 @@
   #btnAddTab:hover { background: #2e7d32; }
 
   /* WORKSHEET AREA */
-  #worksheet {
-    position: relative;
-    flex: 1;
-    background: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 10px;
-    overflow: auto;
-    touch-action: none;
-  }
+ #worksheet {
+  position: relative;
+  flex: 1;
+  background: #fff;
+  display: flex;
+  justify-content: flex-start;   /* was center */
+  align-items: flex-start;       /* was flex-start (ok) */
+  padding: 10px;
+  overflow: auto;
+  touch-action: none;
+}
 
   #mapWrapper {
     position: relative;
@@ -312,6 +312,7 @@
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
     max-width: 100%;
     max-height: 100%;
+    will-change: transform;
   }
 
   #worksheetImage {
@@ -1133,16 +1134,18 @@ function createTabFromTemplate(templateKey) {
 
 /*Zoom */
 function applyZoom(level) {
-  zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, level));
+  const clamped = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, level));
+  zoomLevel = clamped;
   zoomSlider.value = Math.round(zoomLevel * 100);
 
-  // Scale to center
+  // Zoom relative to top-left instead of center
+  mapWrapper.style.transformOrigin = "0 0";  // top-left
   mapWrapper.style.transform = `scale(${zoomLevel})`;
-  mapWrapper.style.transformOrigin = "center center";
 
-  // Re-center inside the worksheet container
-  mapWrapper.style.margin = "auto";
+  // Don’t force auto-centering; let scroll do the work
+  mapWrapper.style.margin = "0";
 }
+
 
 if (zoomSlider) {
   zoomSlider.addEventListener("input", () => {
