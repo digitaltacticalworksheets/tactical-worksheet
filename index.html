@@ -2190,24 +2190,47 @@ function getCanvasCoordsFromTouchEvent(e) {
   return { x, y };
 }
 
-function tileDragTouch(e) {
-  if (!draggingTile) return;
-  touchMoved = true;
+function startTileDragTouch(e) {
+  const tile = e.currentTarget;
+
+  if (mode === "note") {
+    openNotePrompt(tile);
+    e.preventDefault();
+    return;
+  }
+
+  if (mode !== "move") setMode("move");
+  if (mode !== "move") return;
+
+  select(tile);
+  touchMoved = false;
 
   const touch = e.touches[0];
+  const r  = tile.getBoundingClientRect();
   const ws = mapWrapper.getBoundingClientRect();
 
-  let x = touch.clientX - ws.left - dragOffsetX;
-  let y = touch.clientY - ws.top  - dragOffsetY;
+  // FIX: set drag offsets for accurate movement
+  dragOffsetX = touch.clientX - r.left;
+  dragOffsetY = touch.clientY - r.top;
 
-  x = Math.round(x / GRID) * GRID;
-  y = Math.round(y / GRID) * GRID;
+  // FIX: tile actually enters drag mode
+  draggingTile = tile;
 
-  draggingTile.style.left = x + "px";
-  draggingTile.style.top  = y + "px";
+  // Long press → note
+  clearTimeout(longPressTimeout);
+  longPressTimeout = setTimeout(() => {
+    if (!touchMoved && draggingTile === tile) {
+      openNotePrompt(tile);
+      draggingTile = null;
+    }
+  }, LONG_PRESS_MS);
+
+  document.addEventListener("touchmove", tileDragTouch, { passive: false });
+  document.addEventListener("touchend", stopTileDragTouch, { passive: false });
 
   e.preventDefault();
 }
+
 function stopTileDragTouch(e) {
   clearTimeout(longPressTimeout);
 
