@@ -303,6 +303,7 @@
     align-items: flex-start;
     padding: 10px;
     overflow: auto;
+    touch-action: none;
   }
 
   #mapWrapper {
@@ -1163,6 +1164,59 @@ if (btnZoomOut) {
     applyZoom(current - 0.1);
   });
 }
+let isPinching = false;
+let initialPinchDistance = 0;
+let initialZoomLevel = 1;
+
+function getTouchDistance(t1, t2) {
+  const dx = t2.clientX - t1.clientX;
+  const dy = t2.clientY - t1.clientY;
+  return Math.hypot(dx, dy);
+}
+function handleWorksheetTouchStart(e) {
+  // Don't pinch-zoom while drawing/checking
+  if (mode === "pen" || mode === "erase" || mode === "check") return;
+
+  if (e.touches.length === 2) {
+    isPinching = true;
+    initialPinchDistance = getTouchDistance(e.touches[0], e.touches[1]);
+    initialZoomLevel = zoomLevel;
+
+    // Cancel any tile drag / long-press in progress
+    draggingTile = null;
+    clearTimeout(longPressTimeout);
+
+    e.preventDefault();
+  }
+}
+
+function handleWorksheetTouchMove(e) {
+  if (!isPinching) return;
+  if (e.touches.length !== 2) return;
+
+  const dist = getTouchDistance(e.touches[0], e.touches[1]);
+  if (initialPinchDistance <= 0) return;
+
+  const scaleFactor = dist / initialPinchDistance;
+  applyZoom(initialZoomLevel * scaleFactor);
+
+  e.preventDefault();
+}
+
+function handleWorksheetTouchEnd(e) {
+  // When we drop below 2 touches, end the pinch gesture
+  if (e.touches.length < 2) {
+    isPinching = false;
+    initialPinchDistance = 0;
+  }
+}
+
+// Attach to the worksheet container
+worksheet.addEventListener("touchstart", handleWorksheetTouchStart, { passive: false });
+worksheet.addEventListener("touchmove",  handleWorksheetTouchMove,  { passive: false });
+worksheet.addEventListener("touchend",   handleWorksheetTouchEnd);
+worksheet.addEventListener("touchcancel",handleWorksheetTouchEnd);
+
 
 // Initialize zoom once
 applyZoom(1);
