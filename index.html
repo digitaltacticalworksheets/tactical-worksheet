@@ -2216,16 +2216,7 @@ function startTileDragTouch(e) {
   // FIX: tile actually enters drag mode
   draggingTile = tile;
 
-  // Long press → note
-  clearTimeout(longPressTimeout);
-  longPressTimeout = setTimeout(() => {
-    if (!touchMoved && draggingTile === tile) {
-      openNotePrompt(tile);
-      draggingTile = null;
-    }
-  }, LONG_PRESS_MS);
-
-  document.addEventListener("touchmove", tileDragTouch, { passive: false });
+   document.addEventListener("touchmove", tileDragTouch, { passive: false });
   document.addEventListener("touchend", stopTileDragTouch, { passive: false });
 
   e.preventDefault();
@@ -2606,5 +2597,6 @@ saveState();
 
 </body>
 </html>
+
 
 
