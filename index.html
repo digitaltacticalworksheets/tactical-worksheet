@@ -1789,6 +1789,8 @@ function openNotePrompt(tile) {
     }
 
     saveState();
+    saveCurrentTabToMemory();
+    refreshNotesList();   
   }
 
   setMode("move");
@@ -2392,6 +2394,7 @@ saveState();
 
 </body>
 </html>
+
 
 
 
