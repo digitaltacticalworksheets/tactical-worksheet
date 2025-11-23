@@ -1326,6 +1326,9 @@ let mouseMovedDuringPress = false;
 let lastNoteTapTime = 0;
 let lastNoteTappedItem = null;
 
+let clickNoteTimeout = null;
+let lastClickTile = null;
+
 
 /* ===== TAB MANAGEMENT ===== */
 let tabs = [];
@@ -1945,8 +1948,17 @@ if (parToggleBtn) {
 }
 
 /* Mouse Double-Click (PAR Confirm or Duplicate) */
+/* Mouse Double-Click (PAR Confirm or Duplicate) */
 function handleTileDoubleClick(e) {
   const tile = e.currentTarget;
+
+  // Cancel any pending single-click note open
+  if (clickNoteTimeout) {
+    clearTimeout(clickNoteTimeout);
+    clickNoteTimeout = null;
+    lastClickTile = null;
+  }
+
   const type = tile.dataset.type || "";
   const isTextTile =
     type.toLowerCase() === "text" || tile.classList.contains("texttile");
@@ -1966,6 +1978,7 @@ function handleTileDoubleClick(e) {
 
   if (mode === "move") duplicateTileGeneric(tile);
 }
+
 function applyState(state) {
   applyingState = true;
 
@@ -2561,8 +2574,30 @@ function createTileElement(type, cssClass, text) {
   tile.addEventListener("touchstart", startTileDragTouch, { passive: false });
   tile.ondblclick = handleTileDoubleClick;
 
+  // Single mouse click → open note (but ignore drag and double-click)
+  tile.addEventListener("click", (e) => {
+    // If we dragged the tile, don't treat it as a click-for-note
+    if (mouseMovedDuringPress) {
+      mouseMovedDuringPress = false;
+      return;
+    }
+
+    // Wait a bit to see if this becomes a double-click
+    if (clickNoteTimeout) clearTimeout(clickNoteTimeout);
+    lastClickTile = tile;
+
+    clickNoteTimeout = setTimeout(() => {
+      if (lastClickTile === tile) {
+        openNotePrompt(tile);
+      }
+      clickNoteTimeout = null;
+      lastClickTile = null;
+    }, DOUBLE_TAP_MS);
+  });
+
   return tile;
 }
+
 
 function createTile(type, cssClass) {
   const label = prompt(`Enter ${type} label:`);
@@ -2689,13 +2724,6 @@ function startTileDragMouse(e) {
   draggingTile = tile;
   mouseMovedDuringPress = false;
 
-  clearTimeout(longPressTimeout);
-  longPressTimeout = setTimeout(() => {
-    if (!mouseMovedDuringPress && draggingTile === tile) {
-      openNotePrompt(tile);
-      draggingTile = null;
-    }
-  }, LONG_PRESS_MS);
 
   document.addEventListener("mousemove", tileDragMouse);
   document.addEventListener("mouseup", stopTileDragMouse);
@@ -2753,13 +2781,7 @@ function startTileDragTouch(e) {
 
   draggingTile = tile;
 
-  clearTimeout(longPressTimeout);
-  longPressTimeout = setTimeout(() => {
-    if (!touchMoved && draggingTile === tile) {
-      openNotePrompt(tile);
-      draggingTile = null;
-    }
-  }, LONG_PRESS_MS);
+
 
   document.addEventListener("touchmove", tileDragTouch, { passive: false });
   document.addEventListener("touchend", stopTileDragTouch, { passive: false });
@@ -2789,24 +2811,31 @@ function tileDragTouch(e) {
 }
 
 function stopTileDragTouch(e) {
-  clearTimeout(longPressTimeout);
+  // DO NOT clear longPressTimeout here anymore – we use it as our "single-tap" timer
 
-  // Handle double-tap logic
+  // Handle tap logic only if we didn't move (no drag)
   if (!touchMoved && draggingTile) {
     const now = Date.now();
+    const tile = draggingTile;
+    const type = tile.dataset.type || "";
+    const isTextTile =
+      type.toLowerCase() === "text" || tile.classList.contains("texttile");
 
-    if (lastTapTile === draggingTile && (now - lastTapTime) < DOUBLE_TAP_MS) {
-      const tile = draggingTile;
-      const type = tile.dataset.type || "";
-      const isTextTile =
-        type.toLowerCase() === "text" || tile.classList.contains("texttile");
+    const timeSinceLastTap = now - lastTapTime;
+
+    if (lastTapTile === tile && timeSinceLastTap < DOUBLE_TAP_MS) {
+      // 🔁 Second tap within double-tap window → treat as double-tap
+      if (longPressTimeout) {
+        clearTimeout(longPressTimeout);
+        longPressTimeout = null;
+      }
 
       if (parModeActive && tile.classList.contains("par-pending") && !isTextTile) {
         const labelFromData = tile.dataset.label || tile.dataset.unit || "";
         const unitLabel = labelFromData || tile.textContent.trim();
-        const time = formatParTime();
+        const parTime = formatParTime();
 
-        logParNote(`PAR – ${unitLabel} – ${time}`);
+        logParNote(`PAR – ${unitLabel} – ${parTime}`);
         tile.classList.remove("par-pending");
         tile.classList.add("par-complete");
       } else {
@@ -2815,8 +2844,19 @@ function stopTileDragTouch(e) {
 
       lastTapTile = null;
     } else {
-      lastTapTile = draggingTile;
+      // 👆 Single tap: schedule note open, but give window for a second tap
+      lastTapTile = tile;
       lastTapTime = now;
+
+      if (longPressTimeout) clearTimeout(longPressTimeout);
+      longPressTimeout = setTimeout(() => {
+        // If no second tap came in, actually open the note
+        if (lastTapTile === tile) {
+          openNotePrompt(tile);
+          lastTapTile = null;
+        }
+        longPressTimeout = null;
+      }, DOUBLE_TAP_MS);
     }
   }
 
@@ -2835,10 +2875,12 @@ function stopTileDragTouch(e) {
   }
 
   draggingTile = null;
+  touchMoved = false;
 
   document.removeEventListener("touchmove", tileDragTouch);
   document.removeEventListener("touchend", stopTileDragTouch);
 }
+
 
 
 /* Duplicate tile */
@@ -3193,5 +3235,4 @@ saveState();
 
 </body>
 </html>
-
 
