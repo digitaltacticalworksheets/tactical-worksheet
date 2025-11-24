@@ -8,22 +8,25 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
 
-      - name: Restore
+      - name: Restore dependencies
         working-directory: DTWDesktop/DigitalTacticalWorksheet
         run: dotnet restore
 
-      - name: Build
+      - name: Build EXE
         working-directory: DTWDesktop/DigitalTacticalWorksheet
         run: dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true
 
-      - name: Upload EXE
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: DTW-Desktop
