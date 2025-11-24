@@ -1,0 +1,22 @@
+<Window x:Class="DigitalTacticalWorksheet.SplashWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Digital Tactical Worksheet"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Width="800" Height="450"
+        Opacity="1"
+        Loaded="Window_Loaded">
+    <Border CornerRadius="16"
+            Background="#FF111111"
+            Padding="12">
+        <Grid>
+            <Image Source="Splash.png"
+                   Stretch="Uniform" />
+        </Grid>
+    </Border>
+</Window>
