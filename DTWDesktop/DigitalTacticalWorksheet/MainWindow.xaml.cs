@@ -17,7 +17,7 @@ namespace DigitalTacticalWorksheet
             await Browser.EnsureCoreWebView2Async();
 
             // Allowed URL + host
-            string allowedUrl = "https://digitaltacticalworksheets.github.io/tactical-worksheets";
+            string allowedUrl = "https://digitaltacticalworksheets.github.io/tactical-worksheet";
             string allowedHost = "digitaltacticalworksheets.github.io";
 
             // Initial page
