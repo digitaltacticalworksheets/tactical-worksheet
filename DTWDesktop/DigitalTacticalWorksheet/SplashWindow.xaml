@@ -9,15 +9,50 @@
         AllowsTransparency="True"
         Background="Transparent"
         Width="800" Height="450"
-        Opacity="1"
+        Opacity="0"
         Loaded="Window_Loaded">
-    <Border CornerRadius="16"
-            Background="#FF111111"
-            Padding="12">
-        <Grid>
-          <Image Source="pack://application:,,,/Splash.png"
-       Stretch="UniformToFill" />
 
+    <!-- Outer dark rounded card -->
+    <Border CornerRadius="24"
+            Background="#FF111111"
+            Padding="24"
+            SnapsToDevicePixels="True">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Centered content -->
+            <StackPanel Grid.Row="0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Orientation="Vertical"
+                        Margin="0,0,0,0"
+                        TextOptions.TextFormattingMode="Display">
+                <!-- DTW Logo -->
+                <Image Source="pack://application:,,,/Splash.png"
+                       Width="180"
+                       Height="180"
+                       Stretch="Uniform"
+                       Margin="0,0,0,16"
+                       HorizontalAlignment="Center" />
+
+                <!-- App title -->
+                <TextBlock Text="Digital Tactical Worksheet"
+                           Foreground="White"
+                           FontSize="26"
+                           FontWeight="SemiBold"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,4" />
+
+                <!-- Version label -->
+                <TextBlock x:Name="VersionLabel"
+                           Text="v1.0.0"
+                           Foreground="#FFCCCCCC"
+                           FontSize="14"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,0" />
+            </StackPanel>
         </Grid>
     </Border>
 </Window>
