@@ -15,8 +15,9 @@
             Background="#FF111111"
             Padding="12">
         <Grid>
-            <Image Source="Splash.png"
-                   Stretch="Uniform" />
+          <Image Source="pack://application:,,,/Splash.png"
+       Stretch="UniformToFill" />
+
         </Grid>
     </Border>
 </Window>
