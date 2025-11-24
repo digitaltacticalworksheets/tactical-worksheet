@@ -23,15 +23,16 @@ jobs:
         run: dotnet restore
 
       - name: Build single-file EXE
-  working-directory: DTWDesktop/DigitalTacticalWorksheet
-  run: dotnet publish ^
-        -c Release ^
-        -r win-x64 ^
-        --self-contained true ^
-        -p:PublishSingleFile=true ^
-        -p:IncludeNativeLibrariesForSelfExtract=true ^
-        -p:DebugType=None ^
-        -p:ErrorReport=none
+        working-directory: DTWDesktop/DigitalTacticalWorksheet
+        run: |
+          dotnet publish `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=None `
+            -p:ErrorReport=none
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
