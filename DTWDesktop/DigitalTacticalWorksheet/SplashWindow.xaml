@@ -8,31 +8,36 @@
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterScreen"
         ShowInTaskbar="False"
-        Topmost="True">
+        Topmost="True"
+        Opacity="0">
 
-    <Border CornerRadius="12" Background="#222" Padding="20">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+    <!-- Outer rounded card -->
+    <Border CornerRadius="20"
+            Background="#222"
+            Padding="20"
+            SnapsToDevicePixels="True">
 
-            <Image Grid.Row="0"
-                   Source="Splash.png"
-                   Stretch="None"/>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 
-            <StackPanel Grid.Row="1" Margin="0,15,0,0">
-                <TextBlock Text="Created by Daniel Romano"
-                           Foreground="White"
-                           FontSize="14"
-                           Opacity="0.85"
-                           HorizontalAlignment="Center"/>
-                <TextBlock Text="© 2025"
-                           Foreground="White"
-                           FontSize="12"
-                           Opacity="0.65"
-                           HorizontalAlignment="Center"/>
-            </StackPanel>
-        </Grid>
+            <!-- Logo -->
+            <Image Source="Splash.png"
+                   Stretch="Uniform"
+                   MaxWidth="300"
+                   Margin="0,0,0,10"/>
+
+            <!-- Creator credit -->
+            <TextBlock Text="Created by Daniel Romano"
+                       Foreground="White"
+                       HorizontalAlignment="Center"
+                       FontSize="14"
+                       Opacity="0.85"/>
+
+            <TextBlock Text="© 2025"
+                       Foreground="White"
+                       HorizontalAlignment="Center"
+                       FontSize="12"
+                       Opacity="0.65"/>
+        </StackPanel>
+
     </Border>
 </Window>
