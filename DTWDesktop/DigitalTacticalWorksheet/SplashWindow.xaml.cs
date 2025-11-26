@@ -43,4 +43,3 @@ namespace DigitalTacticalWorksheet
         }
     }
 }
-git add
