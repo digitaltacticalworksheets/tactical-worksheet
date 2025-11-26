@@ -1,57 +1,37 @@
 <Window x:Class="DigitalTacticalWorksheet.SplashWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Digital Tactical Worksheet"
-        WindowStartupLocation="CenterScreen"
         WindowStyle="None"
-        ResizeMode="NoResize"
-        ShowInTaskbar="False"
         AllowsTransparency="True"
         Background="Transparent"
-        Width="800" Height="450"
-        Opacity="0"
-        Loaded="Window_Loaded">
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterScreen"
+        ShowInTaskbar="False"
+        Topmost="True">
 
-    <!-- Outer dark rounded card -->
-    <Border CornerRadius="24"
-            Background="#FF111111"
-            Padding="24"
-            SnapsToDevicePixels="True">
+    <Border CornerRadius="12" Background="#222" Padding="20">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Centered content -->
-            <StackPanel Grid.Row="0"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Orientation="Vertical"
-                        Margin="0,0,0,0"
-                        TextOptions.TextFormattingMode="Display">
-                <!-- DTW Logo -->
-                <Image Source="pack://application:,,,/Splash.png"
-                       Width="180"
-                       Height="180"
-                       Stretch="Uniform"
-                       Margin="0,0,0,16"
-                       HorizontalAlignment="Center" />
+            <Image Grid.Row="0"
+                   Source="Splash.png"
+                   Stretch="None"/>
 
-                <!-- App title -->
-                <TextBlock Text="Digital Tactical Worksheet"
+            <StackPanel Grid.Row="1" Margin="0,15,0,0">
+                <TextBlock Text="Created by Daniel Romano"
                            Foreground="White"
-                           FontSize="26"
-                           FontWeight="SemiBold"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,4" />
-
-                <!-- Version label -->
-                <TextBlock x:Name="VersionLabel"
-                           Text="Created by Daniel Romano • © 2025 v1.0.0"
-                           Foreground="#FFCCCCCC"
                            FontSize="14"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,0" />
+                           Opacity="0.85"
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="© 2025"
+                           Foreground="White"
+                           FontSize="12"
+                           Opacity="0.65"
+                           HorizontalAlignment="Center"/>
             </StackPanel>
         </Grid>
     </Border>
