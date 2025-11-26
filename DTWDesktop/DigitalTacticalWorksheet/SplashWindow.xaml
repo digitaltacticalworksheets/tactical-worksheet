@@ -47,7 +47,7 @@
 
                 <!-- Version label -->
                 <TextBlock x:Name="VersionLabel"
-                           Text="v1.0.0"
+                           Text="Created by Daniel Romano • © 2025 v1.0.0"
                            Foreground="#FFCCCCCC"
                            FontSize="14"
                            HorizontalAlignment="Center"
