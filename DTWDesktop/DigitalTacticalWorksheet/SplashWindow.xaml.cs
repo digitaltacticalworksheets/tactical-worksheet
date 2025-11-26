@@ -26,7 +26,7 @@ namespace DigitalTacticalWorksheet
             catch
             {
                 // If anything weird happens, fall back to a static label
-                VersionLabel.Text = "v1.0.0";
+                VersionLabel.Text = "Created by Daniel Romano • © 2025 v1.0.0";
             }
         }
 
