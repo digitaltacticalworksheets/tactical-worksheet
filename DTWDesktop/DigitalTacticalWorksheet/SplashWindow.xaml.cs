@@ -1,5 +1,5 @@
 using System;
-using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Animation;
 
@@ -10,68 +10,37 @@ namespace DigitalTacticalWorksheet
         public SplashWindow()
         {
             InitializeComponent();
-            SetVersionLabel();
+            Loaded += SplashWindow_Loaded;
         }
 
-        private void SetVersionLabel()
+        private async void SplashWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            try
+            // Fade in
+            DoubleAnimation fadeIn = new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(400)));
+            this.BeginAnimation(Window.OpacityProperty, fadeIn);
+
+            // Keep splash visible for 1.8 seconds
+            await Task.Delay(1800);
+
+            // Fade out
+            DoubleAnimation fadeOut = new DoubleAnimation(1, 0, new Duration(TimeSpan.FromMilliseconds(400)));
+            fadeOut.Completed += (s, a) =>
             {
-                var version = Assembly.GetExecutingAssembly().GetName().Version;
-                if (version != null)
+                try
                 {
-                    VersionLabel.Text = $"v{version.Major}.{version.Minor}.{version.Build}";
+                    // Show the main window AFTER fade-out
+                    MainWindow main = new MainWindow();
+                    Application.Current.MainWindow = main;
+                    main.Show();
                 }
-            }
-            catch
-            {
-                // If anything weird happens, fall back to a static label
-                VersionLabel.Text = "Created by Daniel Romano • © 2025 v1.0.0";
-            }
-        }
-
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            // Total splash time: ~2.2s (0.6s fade-in + 1.0s visible + 0.6s fade-out)
-            var storyboard = new Storyboard();
-
-            // Fade IN: 0 -> 1 over 0.6 sec
-            var fadeIn = new DoubleAnimation
-            {
-                From = 0.0,
-                To = 1.0,
-                Duration = TimeSpan.FromSeconds(0.6),
-                BeginTime = TimeSpan.FromSeconds(0.0),
-                FillBehavior = FillBehavior.HoldEnd
+                finally
+                {
+                    this.Close();
+                }
             };
 
-            // Fade OUT: 1 -> 0 over 0.6 sec, starts after 1.6 sec total
-            var fadeOut = new DoubleAnimation
-            {
-                From = 1.0,
-                To = 0.0,
-                Duration = TimeSpan.FromSeconds(0.6),
-                BeginTime = TimeSpan.FromSeconds(1.6),
-                FillBehavior = FillBehavior.Stop
-            };
-
-            Storyboard.SetTarget(fadeIn, this);
-            Storyboard.SetTargetProperty(fadeIn, new PropertyPath(Window.OpacityProperty));
-
-            Storyboard.SetTarget(fadeOut, this);
-            Storyboard.SetTargetProperty(fadeOut, new PropertyPath(Window.OpacityProperty));
-
-            storyboard.Children.Add(fadeIn);
-            storyboard.Children.Add(fadeOut);
-
-            storyboard.Completed += (s, _) =>
-            {
-                var main = new MainWindow();
-                main.Show();
-                this.Close();
-            };
-
-            storyboard.Begin();
+            this.BeginAnimation(Window.OpacityProperty, fadeOut);
         }
     }
 }
+git add
