@@ -2546,38 +2546,103 @@ function openNotePrompt(tile) {
 
   setMode("move");
 }
+/* === Spawn-column config for each unit type === */
+const TILE_SPAWN_COLUMNS = {
+  engine: { left: 20,  top: 20,  slotHeight: 32, width: 140, maxSlots: 25 },
+  tower:  { left: 200, top: 20,  slotHeight: 32, width: 140, maxSlots: 25 },
+  rescue: { left: 380, top: 20,  slotHeight: 32, width: 140, maxSlots: 25 },
+  rit:    { left: 560, top: 20,  slotHeight: 32, width: 140, maxSlots: 25 },
+  chief:  { left: 740, top: 20,  slotHeight: 32, width: 140, maxSlots: 25 },
+  other:  { left: 920, top: 20,  slotHeight: 32, width: 140, maxSlots: 25 }
+};
+
+/**
+ * Get all tiles of this type that are still sitting in their spawn column.
+ * Once you drag a tile away (its left moves out of the column),
+ * it stops blocking spawn slots.
+ */
+function getSpawnColumnTilesOfType(typeKey) {
+  const cfg = TILE_SPAWN_COLUMNS[typeKey];
+  if (!cfg) return [];
+
+  const minLeft = cfg.left - 10;
+  const maxLeft = cfg.left + cfg.width;
+
+  const allTiles = [...mapWrapper.querySelectorAll(".unit-tile")];
+
+  return allTiles.filter(tile => {
+    const tType = (tile.dataset.type || "").toLowerCase();
+    if (tType !== typeKey) return false;
+
+    const left = parseInt(tile.style.left || "0", 10) || 0;
+    return left >= minLeft && left <= maxLeft;
+  });
+}
+
+/**
+ * Is a given slot index (0,1,2,...) already occupied
+ * in this type's spawn column?
+ */
+function isSlotOccupiedForType(typeKey, slotIndex) {
+  const cfg = TILE_SPAWN_COLUMNS[typeKey];
+  if (!cfg) return false;
+
+  const tiles = getSpawnColumnTilesOfType(typeKey);
+  const targetTop = cfg.top + slotIndex * cfg.slotHeight;
+
+  return tiles.some(tile => {
+    const tileTop = parseInt(tile.style.top || "0", 10) || 0;
+    // within half a slot ≈ same row
+    return Math.abs(tileTop - targetTop) < cfg.slotHeight / 2;
+  });
+}
+
+/**
+ * Find the next free (left, top) spawn position for this unit type.
+ */
+function findOpenSpawnSlotForType(typeKey) {
+  const cfg = TILE_SPAWN_COLUMNS[typeKey];
+  if (!cfg) {
+    // fallback default
+    return { left: 10, top: 10 };
+  }
+
+  for (let i = 0; i < cfg.maxSlots; i++) {
+    if (!isSlotOccupiedForType(typeKey, i)) {
+      return {
+        left: cfg.left,
+        top:  cfg.top + i * cfg.slotHeight
+      };
+    }
+  }
+
+  // Column full: place just below last slot and nudge to the right
+  return {
+    left: cfg.left + 30,
+    top:  cfg.top + cfg.maxSlots * cfg.slotHeight + 10
+  };
+}
 
 
 /* Spawn location: one fixed slot per type */
+/* Spawn location: per-type spawn column with open-slot search */
 function placeTileInStackPosition(tile) {
-  const type = (tile.dataset.type || "").toLowerCase();
+  const typeKey = (tile.dataset.type || "").toLowerCase();
 
-  if (type === "text" || type === "label") {
+  // Text/label tiles keep the simple behavior
+  if (typeKey === "text" || typeKey === "label") {
     tile.style.left = "10px";
     tile.style.top  = "10px";
     return;
   }
 
-  const colX = {
-    engine: 20,
-    tower:  200,
-    rescue: 380,
-    rit:    560,
-    chief:  740,
-    other:  920
-  };
-  const topMargin = 20;
+  // For Engines, Towers, etc. use the spawn-column logic
+  const pos = findOpenSpawnSlotForType(typeKey);
 
-  const x = colX[type];
-  if (x === undefined) {
-    tile.style.left = "10px";
-    tile.style.top  = "10px";
-    return;
-  }
-
-  tile.style.left = x + "px";
-  tile.style.top  = topMargin + "px";
+  tile.style.left = pos.left + "px";
+  tile.style.top  = pos.top  + "px";
 }
+
 
 /* Tile creation */
 function createTileElement(type, cssClass, text) {
@@ -3300,3 +3365,4 @@ saveState();
 
 </body>
 </html>
+
