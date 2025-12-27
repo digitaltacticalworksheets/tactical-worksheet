@@ -22,7 +22,7 @@ namespace DigitalTacticalWorksheet
             string allowedHost = "www.digitaltacticalworksheets.com";
 
             // Navigate AFTER WebView2 is initialized
-            Browser.Source = new Uri("https://digitaltacticalworksheets.com/");
+            Browser.Source = new Uri("https://www.digitaltacticalworksheets.com/");
 
             // Navigation control
             Browser.CoreWebView2.NavigationStarting += (s, args) =>
