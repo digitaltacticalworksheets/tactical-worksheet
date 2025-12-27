@@ -1,5 +1,6 @@
 using Microsoft.Web.WebView2.Core;
 using System;
+using System.Diagnostics;
 using System.Windows;
 
 namespace DigitalTacticalWorksheet
@@ -14,35 +15,42 @@ namespace DigitalTacticalWorksheet
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            // Ensure WebView2 is ready
             await Browser.EnsureCoreWebView2Async();
 
-            // Allowed URL + host
-            string allowedUrl = "https://digitaltacticalworksheets.com";
-            string allowedHost = "https://digitaltacticalworksheets.com";
+            // Allowed root domain (host only)
+            string allowedHost = "digitaltacticalworksheets.com";
 
-            // Initial page
-            Browser.Source = new Uri(allowedUrl);
+            // Navigate AFTER WebView2 is initialized
+            Browser.Source = new Uri("https://digitaltacticalworksheets.com/");
 
-            // Lock navigation
+            // Navigation control
             Browser.CoreWebView2.NavigationStarting += (s, args) =>
             {
                 try
                 {
                     var uri = new Uri(args.Uri);
 
-                    // Only allow our host
-                    if (!uri.Host.Equals(allowedHost, StringComparison.OrdinalIgnoreCase))
+                    // Allow our domain + subdomains
+                    if (!uri.Host.EndsWith(allowedHost, StringComparison.OrdinalIgnoreCase))
                     {
+                        // Block in-app navigation
                         args.Cancel = true;
+
+                        // Open externally instead
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = args.Uri,
+                            UseShellExecute = true
+                        });
                     }
                 }
                 catch
                 {
-                    // If it can't parse the URL, block it
+                    // Block anything malformed
                     args.Cancel = true;
                 }
             };
         }
     }
 }
-
