@@ -19,7 +19,7 @@ namespace DigitalTacticalWorksheet
             await Browser.EnsureCoreWebView2Async();
 
             // Allowed root domain (host only)
-            string allowedHost = "digitaltacticalworksheets.com";
+            string allowedHost = "www.digitaltacticalworksheets.com";
 
             // Navigate AFTER WebView2 is initialized
             Browser.Source = new Uri("https://digitaltacticalworksheets.com/");
